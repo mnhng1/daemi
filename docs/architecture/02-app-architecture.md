@@ -7,19 +7,19 @@ The app is organized around product domains rather than technical layers only.
 Recommended structure:
 
 ```txt
-src/
-  app/
-    _layout.tsx
-    index.tsx
-    (auth)/
-    (tabs)/
-      timeline/
-      collections/
-      add/
-      search/
-    memory/
-      [id].tsx
+app/
+  _layout.tsx
+  index.tsx
+  (auth)/
+  (tabs)/
+    timeline/
+    collections/
+    add/
+    search/
+  memory/
+    [id].tsx
 
+src/
   components/
     ui/
     memory/
