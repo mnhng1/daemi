@@ -1,41 +1,73 @@
-import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView } from "react-native";
-import { useSession, useSignOut } from "../../../src/features/auth";
+import { useState, useMemo, useCallback } from "react";
+import { View, SectionList, RefreshControl } from "react-native";
 import { useCurrentCoupleSpace } from "../../../src/features/couple-space";
+import { useMemories, groupMemoriesByDate } from "../../../src/features/memories";
+import { MemoryTypeFilter } from "../../../src/features/memories/types";
+import { TimelineHeader } from "../../../src/components/timeline/timeline-header";
+import { TimelineTypeFilters } from "../../../src/components/timeline/timeline-type-filters";
+import { TimelineDateHeader } from "../../../src/components/timeline/timeline-date-header";
+import { TimelineRow } from "../../../src/components/timeline/timeline-row";
+import { TimelineEmpty } from "../../../src/components/timeline/timeline-empty";
+import { TimelineLoading } from "../../../src/components/timeline/timeline-loading";
+import { TimelineError } from "../../../src/components/timeline/timeline-error";
+import { colors } from "../../../src/lib/theme/tokens";
 
 export default function Timeline() {
-  const { session } = useSession();
+  const [typeFilter, setTypeFilter] = useState<MemoryTypeFilter>("all");
   const { data: coupleSpace } = useCurrentCoupleSpace();
-  const signOut = useSignOut();
+  const spaceId = coupleSpace?.couple_spaces.id;
+  const { data: memories, isLoading, isError, refetch } = useMemories(spaceId, typeFilter);
+  const sections = useMemo(() => groupMemoriesByDate(memories ?? []), [memories]);
+
+  const renderSectionHeader = useCallback(
+    ({ section }: { section: { title: string } }) => (
+      <TimelineDateHeader title={section.title} />
+    ),
+    []
+  );
+
+  const renderItem = useCallback(
+    ({ item, index, section }: { item: any; index: number; section: { data: any[] } }) => (
+      <TimelineRow
+        memory={item}
+        index={index}
+        isFirst={index === 0}
+        isLast={index === section.data.length - 1}
+      />
+    ),
+    []
+  );
+
+  const renderContent = () => {
+    if (isLoading) return <TimelineLoading />;
+    if (isError) return <TimelineError onRetry={refetch} />;
+    if (sections.length === 0) return <TimelineEmpty />;
+    return null;
+  };
 
   return (
-    <ScrollView className="flex-1 bg-paper" contentContainerStyle={{ padding: 24, paddingTop: 60 }}>
-      <Text className="text-accent font-bold text-2xl mb-6">daemi</Text>
-
-      <View className="bg-shade rounded-xl p-4 mb-4">
-        <Text className="text-ink-3 text-xs uppercase tracking-wider mb-1">Signed in as</Text>
-        <Text className="text-ink text-base">{session?.user.email}</Text>
-      </View>
-
-      {coupleSpace?.couple_spaces && (
-        <View className="bg-shade rounded-xl p-4 mb-4">
-          <Text className="text-ink-3 text-xs uppercase tracking-wider mb-1">Space</Text>
-          <Text className="text-ink text-base mb-3">{coupleSpace.couple_spaces.name ?? "Unnamed space"}</Text>
-          <Text className="text-ink-3 text-xs uppercase tracking-wider mb-1">Invite Code</Text>
-          <Text className="text-ink text-base font-mono">{coupleSpace.couple_spaces.invite_code}</Text>
-        </View>
+    <View className="flex-1 bg-paper">
+      <TimelineHeader />
+      <TimelineTypeFilters active={typeFilter} onChange={setTypeFilter} />
+      {renderContent() ?? (
+        <SectionList
+          sections={sections}
+          keyExtractor={(item) => item.id}
+          renderSectionHeader={renderSectionHeader}
+          renderItem={renderItem}
+          stickySectionHeadersEnabled={false}
+          windowSize={5}
+          maxToRenderPerBatch={10}
+          refreshControl={
+            <RefreshControl
+              refreshing={false}
+              onRefresh={refetch}
+              tintColor={colors.accent}
+            />
+          }
+          contentContainerStyle={{ paddingBottom: 32 }}
+        />
       )}
-
-      <TouchableOpacity
-        className="bg-red-500 rounded-xl py-3.5 items-center mt-4"
-        onPress={() => signOut.mutate()}
-        disabled={signOut.isPending}
-      >
-        {signOut.isPending ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text className="text-white font-semibold text-base">Sign Out</Text>
-        )}
-      </TouchableOpacity>
-    </ScrollView>
+    </View>
   );
 }
