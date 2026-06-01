@@ -2,7 +2,7 @@ import { View } from "react-native";
 import { Memory } from "../../types/database";
 import { TimelineItem, isMemoryGroup } from "../../features/memories/types";
 import { MemoryCard } from "../memory/memory-card";
-import { MemoryCarousel } from "../memory/memory-carousel";
+import { MemoryGroupCard } from "../memory/memory-carousel";
 import { TimelineSpine } from "./timeline-spine";
 import { colors } from "../../lib/theme/tokens";
 
@@ -27,7 +27,7 @@ export function TimelineRow({ item, index, isFirst, isLast }: Props) {
       />
       <View className="flex-1 ml-3 pb-4">
         {isMemoryGroup(item) ? (
-          <MemoryCarousel memories={item.memories} />
+          <MemoryGroupCard memories={item.memories} />
         ) : (
           <MemoryCard memory={item} index={index} />
         )}
