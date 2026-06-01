@@ -10,28 +10,44 @@ interface Props {
 
 export const PhotoMemoryCard = React.memo(function PhotoMemoryCard({ memory, index }: Props) {
   const { data: mediaUrl } = useMediaUrl(memory);
-  const rotation = index % 2 === 0 ? "rotate-[0.5deg]" : "rotate-[-0.5deg]";
 
   return (
-    <View className={`bg-surface rounded-2xl border border-ink-4/20 shadow-sm overflow-hidden ${rotation}`}>
-      {mediaUrl && (
-        <Image
-          source={{ uri: mediaUrl }}
-          className="w-full aspect-[4/3] rounded-xl"
-          resizeMode="cover"
-          accessibilityLabel={memory.title ?? "Photo memory"}
-        />
-      )}
-      {memory.title && (
-        <View className="p-3">
-          <Text className="text-ink text-base font-semibold leading-snug">
+    <View className="bg-surface rounded-2xl border border-ink-4/20 shadow-sm overflow-hidden">
+      <View className="p-2">
+        {mediaUrl ? (
+          <Image
+            source={{ uri: mediaUrl }}
+            className="w-full rounded-xl"
+            style={{ aspectRatio: 4 / 3 }}
+            resizeMode="cover"
+            accessibilityLabel={memory.title ?? "Photo memory"}
+          />
+        ) : (
+          <View
+            className="w-full rounded-xl bg-shade items-center justify-center"
+            style={{ aspectRatio: 4 / 3 }}
+          />
+        )}
+      </View>
+
+      <View className="px-3 pb-3 pt-1">
+        {memory.title && (
+          <Text className="text-ink text-base font-semibold leading-snug" numberOfLines={1}>
             {memory.title}
           </Text>
-          {memory.place_name && (
-            <Text className="text-ink-3 text-xs mt-1">{memory.place_name}</Text>
+        )}
+        <View className="flex-row items-center justify-between mt-1.5">
+          {memory.place_name ? (
+            <View className="flex-row items-center bg-surface-2 rounded-full px-2.5 py-1">
+              <View className="w-1.5 h-1.5 rounded-full bg-ink-3 mr-1.5" />
+              <Text className="text-ink-3 text-xs">{memory.place_name}</Text>
+            </View>
+          ) : (
+            <View />
           )}
+          <View className="w-6 h-6 rounded-full bg-shade border border-ink-4/30" />
         </View>
-      )}
+      </View>
     </View>
   );
 });
