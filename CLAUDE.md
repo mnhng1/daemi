@@ -17,4 +17,4 @@ Private shared scrapbook app for long-distance couples. Expo + React Native + Ty
 
 ## Current Phase
 
-Phase 0 (Foundation) — complete. Phase 1 (Database & Auth) — complete. Phase 2 (Auth Flow & Route Guards) — complete. Next: Phase 3 (Timeline).
+Phase 0 (Foundation) — complete. Phase 1 (Database & Auth) — complete. Phase 2 (Auth Flow & Route Guards) — complete. Phase 3 (Timeline Day View) — complete. Next: Phase 4 (Add Memory flow).

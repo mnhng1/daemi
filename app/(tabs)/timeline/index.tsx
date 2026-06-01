@@ -1,8 +1,8 @@
 import { useState, useMemo, useCallback } from "react";
 import { View, SectionList, RefreshControl } from "react-native";
 import { useCurrentCoupleSpace } from "../../../src/features/couple-space";
-import { useMemories, groupMemoriesByDate } from "../../../src/features/memories";
-import { MemoryTypeFilter } from "../../../src/features/memories/types";
+import { useMemories, groupMemoriesByDate, isMemoryGroup } from "../../../src/features/memories";
+import { MemoryTypeFilter, TimelineItem, MemoryGroup } from "../../../src/features/memories/types";
 import { TimelineHeader } from "../../../src/components/timeline/timeline-header";
 import { TimelineTypeFilters } from "../../../src/components/timeline/timeline-type-filters";
 import { TimelineDateHeader } from "../../../src/components/timeline/timeline-date-header";
@@ -17,25 +17,41 @@ export default function Timeline() {
   const { data: coupleSpace } = useCurrentCoupleSpace();
   const spaceId = coupleSpace?.couple_spaces.id;
   const { data: memories, isLoading, isError, refetch } = useMemories(spaceId, typeFilter);
-  const sections = useMemo(() => groupMemoriesByDate(memories ?? []), [memories]);
+
+  const sections = useMemo(() => {
+    const raw = groupMemoriesByDate(memories ?? []);
+    return raw.map((section) => {
+      if (section.data.length <= 1) {
+        return section as { title: string; dateKey: string; data: TimelineItem[] };
+      }
+      const group: MemoryGroup = { _group: true, memories: section.data, id: section.dateKey };
+      return { title: section.title, dateKey: section.dateKey, data: [group] as TimelineItem[] };
+    });
+  }, [memories]);
 
   const renderSectionHeader = useCallback(
-    ({ section }: { section: { title: string } }) => (
-      <TimelineDateHeader title={section.title} />
-    ),
-    []
+    ({ section }: { section: { title: string } }) => {
+      const sectionIdx = sections.findIndex((s) => s.title === section.title);
+      return <TimelineDateHeader title={section.title} isFirst={sectionIdx === 0} />;
+    },
+    [sections]
   );
 
   const renderItem = useCallback(
-    ({ item, index, section }: { item: any; index: number; section: { data: any[] } }) => (
-      <TimelineRow
-        memory={item}
-        index={index}
-        isFirst={index === 0}
-        isLast={index === section.data.length - 1}
-      />
-    ),
-    []
+    ({ item, index, section }: { item: TimelineItem; index: number; section: { data: TimelineItem[] } }) => {
+      const sectionIdx = sections.findIndex((s) => s.title === (section as any).title);
+      const isFirstGlobal = sectionIdx === 0 && index === 0;
+      const isLastGlobal = sectionIdx === sections.length - 1 && index === section.data.length - 1;
+      return (
+        <TimelineRow
+          item={item}
+          index={index}
+          isFirst={isFirstGlobal}
+          isLast={isLastGlobal}
+        />
+      );
+    },
+    [sections]
   );
 
   const renderContent = () => {

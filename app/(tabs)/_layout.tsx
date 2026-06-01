@@ -31,7 +31,7 @@ export default function TabLayout() {
     >
       <Tabs.Screen name="timeline" options={{ title: "Timeline", headerShown: false }} />
       <Tabs.Screen name="collections" options={{ title: "Trips" }} />
-      <Tabs.Screen name="add" options={{ title: "Add" }} />
+      <Tabs.Screen name="add" options={{ title: "Add", headerShown: false }} />
       <Tabs.Screen name="search" options={{ title: "Find" }} />
     </Tabs>
   );
