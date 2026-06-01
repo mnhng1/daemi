@@ -53,10 +53,15 @@ Users can:
 
 ## Storage Security
 
-Media files should be private.
+Media files are private. R2 bucket has no public access.
 
-Recommended:
+Access control is enforced by the `media-presign` Supabase Edge Function:
 
-- use signed URLs
-- enforce storage path includes couple space ID
-- validate access through backend policies or signed URL generation
+- Verifies Supabase JWT (authentication)
+- Queries `couple_members` to confirm user belongs to the couple space (authorization)
+- Returns short-lived presigned URLs (10 min upload, 1 hour download)
+- R2 API credentials stored as Edge Function secrets, never exposed to client
+
+Storage path convention (`couple-spaces/{coupleSpaceId}/...`) embeds the couple space ID for auditability.
+
+Legacy: Phase 4 MVP uses Supabase Storage RLS policies on `storage.objects` with `is_couple_space_member()`. These are replaced by Edge Function auth after R2 migration.

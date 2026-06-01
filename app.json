@@ -31,7 +31,12 @@
       "expo-router",
       "expo-status-bar",
       "expo-font",
-      "expo-secure-store"
+      "expo-secure-store",
+      "@react-native-community/datetimepicker",
+      ["expo-image-picker", {
+        "photosPermission": "Daemi needs access to your photos to add memories.",
+        "cameraPermission": "Daemi needs access to your camera to take photos."
+      }]
     ]
   }
 }

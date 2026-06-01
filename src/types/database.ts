@@ -92,6 +92,7 @@ export type Database = {
           title: string | null
           body: string | null
           media_url: string | null
+          storage_key: string | null
           thumbnail_url: string | null
           date_happened: string
           place_name: string | null
@@ -109,6 +110,7 @@ export type Database = {
           title?: string | null
           body?: string | null
           media_url?: string | null
+          storage_key?: string | null
           thumbnail_url?: string | null
           date_happened: string
           place_name?: string | null
@@ -126,6 +128,7 @@ export type Database = {
           title?: string | null
           body?: string | null
           media_url?: string | null
+          storage_key?: string | null
           thumbnail_url?: string | null
           date_happened?: string
           place_name?: string | null
