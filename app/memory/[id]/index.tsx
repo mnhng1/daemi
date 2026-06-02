@@ -1,10 +1,10 @@
 import { View, Text, ActivityIndicator, TouchableOpacity } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useMemory } from "../../src/features/memories";
-import { LetterDetailView } from "../../src/components/memory/letter-detail-view";
-import { PhotoDetailView } from "../../src/components/memory/photo-detail-view";
-import { colors } from "../../src/lib/theme/tokens";
+import { useMemory } from "../../../src/features/memories";
+import { LetterDetailView } from "../../../src/components/memory/letter-detail-view";
+import { PhotoDetailView } from "../../../src/components/memory/photo-detail-view";
+import { colors } from "../../../src/lib/theme/tokens";
 
 export default function MemoryDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();

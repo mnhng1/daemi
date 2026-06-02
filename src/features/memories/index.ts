@@ -1,6 +1,9 @@
 export { useMemories } from "./use-memories";
 export { useCreateMemory } from "./use-create-memory";
+export { useUpdateMemory } from "./use-update-memory";
 export { useMemory } from "./use-memory";
+export { useToggleReaction } from "./use-toggle-reaction";
+export { useDeleteMemory } from "./use-delete-memory";
 export { groupMemoriesByDate } from "./group-memories-by-date";
 export type { MemoryTypeFilter, TimelineDateSection, MemoryGroup, TimelineItem } from "./types";
 export { isMemoryGroup } from "./types";

@@ -8,7 +8,7 @@ export function useMemory(memoryId: string | undefined) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("memories")
-        .select("*, author:profiles!created_by_user_id(display_name)")
+        .select("*, author:profiles!created_by_user_id(display_name), reactions:memory_reactions(user_id,type)")
         .eq("id", memoryId!)
         .is("deleted_at", null)
         .single();

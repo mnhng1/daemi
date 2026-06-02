@@ -9,7 +9,7 @@ export function useMemories(spaceId: string | undefined, typeFilter: MemoryTypeF
     queryFn: async () => {
       let query = supabase
         .from("memories")
-        .select("*, author:profiles!created_by_user_id(display_name)")
+        .select("*, author:profiles!created_by_user_id(display_name), reactions:memory_reactions(user_id,type)")
         .eq("couple_space_id", spaceId!)
         .is("deleted_at", null)
         .order("date_happened", { ascending: false });

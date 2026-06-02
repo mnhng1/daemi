@@ -233,4 +233,5 @@ export type MemoryReaction = Tables<"memory_reactions">
 
 export type MemoryWithAuthor = Memory & {
   author: { display_name: string | null } | null;
+  reactions: { user_id: string; type: "heart" }[];
 };
