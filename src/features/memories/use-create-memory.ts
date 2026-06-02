@@ -6,16 +6,27 @@ import type { Database } from "../../types/database";
 
 type MemoryInsert = Database["public"]["Tables"]["memories"]["Insert"];
 
-type CreateMemoryInput = {
+type CreateMemoryBase = {
   coupleSpaceId: string;
   userId: string;
+  title?: string;
+  dateHappened: string;
+};
+
+type CreatePhotoInput = CreateMemoryBase & {
+  type: "photo";
+  body?: string;
   imageUri: string;
   mimeType: string;
-  title?: string;
-  body?: string;
-  dateHappened: string;
   onProgress?: (percent: number) => void;
 };
+
+type CreateLetterInput = CreateMemoryBase & {
+  type: "letter";
+  body: string;
+};
+
+type CreateMemoryInput = CreatePhotoInput | CreateLetterInput;
 
 export function useCreateMemory() {
   const queryClient = useQueryClient();
@@ -24,21 +35,25 @@ export function useCreateMemory() {
     mutationFn: async (input: CreateMemoryInput) => {
       const memoryId = Crypto.randomUUID();
 
-      const { key } = await uploadMemoryImage({
-        imageUri: input.imageUri,
-        coupleSpaceId: input.coupleSpaceId,
-        memoryId,
-        mimeType: input.mimeType,
-        onProgress: input.onProgress,
-      });
+      let storageKey: string | null = null;
+      if (input.type === "photo") {
+        const { key } = await uploadMemoryImage({
+          imageUri: input.imageUri,
+          coupleSpaceId: input.coupleSpaceId,
+          memoryId,
+          mimeType: input.mimeType,
+          onProgress: input.onProgress,
+        });
+        storageKey = key;
+      }
 
       const memoryInsert: MemoryInsert = {
         id: memoryId,
         couple_space_id: input.coupleSpaceId,
-        type: "photo",
+        type: input.type,
         title: input.title ?? null,
         body: input.body ?? null,
-        storage_key: key,
+        storage_key: storageKey,
         date_happened: input.dateHappened,
         created_by_user_id: input.userId,
       };

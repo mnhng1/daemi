@@ -230,3 +230,7 @@ export type CoupleMember = Tables<"couple_members">
 export type Memory = Tables<"memories">
 export type Collection = Tables<"collections">
 export type MemoryReaction = Tables<"memory_reactions">
+
+export type MemoryWithAuthor = Memory & {
+  author: { display_name: string | null } | null;
+};

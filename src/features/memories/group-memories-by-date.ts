@@ -1,9 +1,9 @@
-import { Memory } from "../../types/database";
+import { MemoryWithAuthor } from "../../types/database";
 import { toDateKey, formatTimelineDate } from "../../lib/utils/date";
 import { TimelineDateSection } from "./types";
 
-export function groupMemoriesByDate(memories: Memory[]): TimelineDateSection[] {
-  const map = new Map<string, Memory[]>();
+export function groupMemoriesByDate(memories: MemoryWithAuthor[]): TimelineDateSection[] {
+  const map = new Map<string, MemoryWithAuthor[]>();
 
   for (const memory of memories) {
     const key = toDateKey(memory.date_happened);

@@ -9,14 +9,14 @@ import Animated, {
   useReducedMotion,
   Easing,
 } from "react-native-reanimated";
-import { Memory } from "../../types/database";
+import { MemoryWithAuthor } from "../../types/database";
 import { PhotoMemoryCard } from "./photo-memory-card";
 import { LetterMemoryCard } from "./letter-memory-card";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface Props {
-  memory: Memory;
+  memory: MemoryWithAuthor;
   index: number;
 }
 
