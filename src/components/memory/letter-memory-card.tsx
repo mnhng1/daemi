@@ -32,9 +32,14 @@ export const LetterMemoryCard = React.memo(function LetterMemoryCard({ memory }:
         {memory.body}
       </Text>
 
-      <View className="flex-row justify-between mt-3">
+      <View className="flex-row justify-between items-center mt-3">
         <Text className="text-ink-3 text-xs">{formatLetterDate(memory.date_happened)}</Text>
-        <Text className="text-ink-3 text-xs">{wordCount(memory.body)} words</Text>
+        <View className="flex-row items-center gap-1.5">
+          {memory.reactions.length > 0 && (
+            <Text style={{ fontSize: 12 }}>❤️</Text>
+          )}
+          <Text className="text-ink-3 text-xs">{wordCount(memory.body)} words</Text>
+        </View>
       </View>
     </View>
   );

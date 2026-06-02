@@ -42,6 +42,7 @@ interface Props {
   partnerName: string | null;
   authorName: string | null;
   isPending?: boolean;
+  initialBody?: string;
   onSend: (body: string) => void;
   onCancel: () => void;
 }
@@ -50,12 +51,13 @@ export function LetterComposer({
   partnerName,
   authorName,
   isPending,
+  initialBody,
   onSend,
   onCancel,
 }: Props) {
   const to = partnerName?.toLowerCase() ?? "them";
   const from = authorName?.toLowerCase() ?? "me";
-  const [body, setBody] = useState("");
+  const [body, setBody] = useState(initialBody ?? "");
 
   return (
     <SafeAreaView style={styles.root} edges={["top", "bottom"]}>

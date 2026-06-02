@@ -45,7 +45,12 @@ export const PhotoMemoryCard = React.memo(function PhotoMemoryCard({ memory, ind
           ) : (
             <View />
           )}
-          <View className="w-6 h-6 rounded-full bg-shade border border-ink-4/30" />
+          <View className="flex-row items-center gap-1.5">
+            {memory.reactions.length > 0 && (
+              <Text style={{ fontSize: 12 }}>❤️</Text>
+            )}
+            <View className="w-6 h-6 rounded-full bg-shade border border-ink-4/30" />
+          </View>
         </View>
       </View>
     </View>
