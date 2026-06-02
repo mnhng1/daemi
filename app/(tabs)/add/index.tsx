@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -16,11 +16,14 @@ import { z } from "zod";
 import * as ImagePicker from "expo-image-picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useSession } from "../../../src/features/auth";
-import { useCurrentCoupleSpace } from "../../../src/features/couple-space";
+import { useSession, useCurrentUser } from "../../../src/features/auth";
+import { useCurrentCoupleSpace, usePartner } from "../../../src/features/couple-space";
 import { useCreateMemory } from "../../../src/features/memories";
 import { formatTimelineDate } from "../../../src/lib/utils/date";
+import { wordCount } from "../../../src/lib/utils/text";
 import { colors } from "../../../src/lib/theme/tokens";
+import { MemoryTypePicker } from "../../../src/components/add-memory/memory-type-picker";
+import { LetterComposer } from "../../../src/components/add-memory/letter-composer";
 
 const schema = z.object({
   title: z.string().optional(),
@@ -34,14 +37,19 @@ export default function Add() {
   const router = useRouter();
   const { session } = useSession();
   const { data: coupleSpaceData } = useCurrentCoupleSpace();
+  const { data: currentUser } = useCurrentUser();
+  const { data: partnerName } = usePartner();
   const createMemory = useCreateMemory();
 
+  const [selectedType, setSelectedType] = useState<"photo" | "letter" | null>(null);
   const [image, setImage] = useState<{ uri: string; mimeType: string } | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [letterBody, setLetterBody] = useState("");
+  const [letterError, setLetterError] = useState<string | null>(null);
 
-  const { control, handleSubmit, formState: { errors }, reset, setValue, watch } = useForm<FormData>({
+  const { control, handleSubmit, reset, setValue, watch } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       title: "",
@@ -55,11 +63,13 @@ export default function Add() {
   useFocusEffect(
     useCallback(() => {
       return () => {
+        setSelectedType(null);
         reset();
         setImage(null);
         setImageError(null);
         setShowDatePicker(false);
         setUploadProgress(null);
+        setLetterError(null);
         createMemory.reset();
       };
     }, [reset, createMemory.reset])
@@ -79,39 +89,109 @@ export default function Add() {
     }
   }
 
+  function resetForm() {
+    setUploadProgress(null);
+    reset();
+    setImage(null);
+    setLetterBody("");
+    setLetterError(null);
+    setSelectedType(null);
+    router.replace("/(tabs)/timeline");
+  }
+
   function onSubmit(data: FormData) {
-    if (!image) {
-      setImageError("Pick a photo to save this memory.");
-      return;
-    }
     const coupleSpaceId = coupleSpaceData?.couple_spaces?.id;
     if (!coupleSpaceId || !session?.user.id) {
-      setImageError("Unable to save. Please sign in and try again.");
+      if (selectedType === "letter") {
+        setLetterError("Unable to save. Please sign in and try again.");
+      } else {
+        setImageError("Unable to save. Please sign in and try again.");
+      }
       return;
     }
 
+    if (selectedType === "letter") {
+      if (!letterBody.trim()) {
+        setLetterError("Write something before saving.");
+        return;
+      }
+      setLetterError(null);
+      createMemory.mutate(
+        {
+          type: "letter",
+          coupleSpaceId,
+          userId: session.user.id,
+          title: data.title || undefined,
+          body: letterBody,
+          dateHappened: data.dateHappened,
+        },
+        { onSuccess: resetForm, onError: () => setUploadProgress(null) }
+      );
+    } else {
+      if (!image) {
+        setImageError("Pick a photo to save this memory.");
+        return;
+      }
+      createMemory.mutate(
+        {
+          type: "photo",
+          coupleSpaceId,
+          userId: session.user.id,
+          imageUri: image.uri,
+          mimeType: image.mimeType,
+          title: data.title || undefined,
+          body: data.body || undefined,
+          dateHappened: data.dateHappened,
+          onProgress: setUploadProgress,
+        },
+        { onSuccess: resetForm, onError: () => setUploadProgress(null) }
+      );
+    }
+  }
+
+  function handleLetterSend(body: string) {
+    const coupleSpaceId = coupleSpaceData?.couple_spaces?.id;
+    if (!coupleSpaceId || !session?.user.id) {
+      setLetterError("Unable to save. Please sign in and try again.");
+      return;
+    }
+    if (!body.trim()) {
+      setLetterError("Write something before sending.");
+      return;
+    }
+    setLetterError(null);
     createMemory.mutate(
       {
+        type: "letter",
         coupleSpaceId,
         userId: session.user.id,
-        imageUri: image.uri,
-        mimeType: image.mimeType,
-        title: data.title || undefined,
-        body: data.body || undefined,
-        dateHappened: data.dateHappened,
-        onProgress: setUploadProgress,
+        body,
+        dateHappened: new Date().toISOString().slice(0, 10),
       },
-      {
-        onSuccess: () => {
-          setUploadProgress(null);
-          reset();
-          setImage(null);
-          router.replace("/(tabs)/timeline");
-        },
-        onError: () => {
-          setUploadProgress(null);
-        },
-      }
+      { onSuccess: resetForm }
+    );
+  }
+
+  if (!selectedType) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.shade }} edges={["top"]}>
+        <MemoryTypePicker
+          onSelect={setSelectedType}
+          onDismiss={() => router.replace("/(tabs)/timeline")}
+        />
+      </SafeAreaView>
+    );
+  }
+
+  if (selectedType === "letter") {
+    return (
+      <LetterComposer
+        partnerName={partnerName ?? null}
+        authorName={currentUser?.display_name ?? null}
+        isPending={createMemory.isPending}
+        onSend={handleLetterSend}
+        onCancel={() => setSelectedType(null)}
+      />
     );
   }
 
@@ -126,68 +206,80 @@ export default function Add() {
           keyboardShouldPersistTaps="handled"
         >
           <View className="px-6 py-6">
-            <Text className="text-ink font-bold text-xl mb-6">New Photo</Text>
+            <View className="flex-row items-center mb-6">
+              <TouchableOpacity
+                onPress={() => setSelectedType(null)}
+                style={{ marginRight: 12 }}
+              >
+                <Text style={{ fontSize: 22, color: colors.ink }}>←</Text>
+              </TouchableOpacity>
+              <Text className="text-ink font-bold text-xl">New Photo</Text>
+            </View>
 
-            <TouchableOpacity onPress={pickImage} className="mb-4">
-              {image ? (
-                <Image
-                  source={{ uri: image.uri }}
-                  className="w-full h-64 rounded-xl"
-                  resizeMode="cover"
-                />
-              ) : (
-                <View className="w-full h-64 rounded-xl border-2 border-dashed border-ink-4 items-center justify-center">
-                  <Text className="text-ink-3 text-base">Tap to choose a photo</Text>
+            {selectedType === "photo" && (
+              <>
+                <TouchableOpacity onPress={pickImage} className="mb-4">
+                  {image ? (
+                    <Image
+                      source={{ uri: image.uri }}
+                      className="w-full h-64 rounded-xl"
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View className="w-full h-64 rounded-xl border-2 border-dashed border-ink-4 items-center justify-center">
+                      <Text className="text-ink-3 text-base">Tap to choose a photo</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+                {imageError && (
+                  <Text className="text-red-500 text-xs mb-2">{imageError}</Text>
+                )}
+
+                <View className="mb-4">
+                  <Text className="text-ink-2 text-sm mb-1.5 font-medium">
+                    Caption <Text className="text-ink-3 font-normal">(optional)</Text>
+                  </Text>
+                  <Controller
+                    control={control}
+                    name="title"
+                    render={({ field: { onChange, onBlur, value } }) => (
+                      <TextInput
+                        className="bg-shade rounded-xl px-4 py-3.5 text-ink text-base"
+                        placeholder="A short caption"
+                        placeholderTextColor={colors.ink3}
+                        onBlur={onBlur}
+                        onChangeText={onChange}
+                        value={value}
+                      />
+                    )}
+                  />
                 </View>
-              )}
-            </TouchableOpacity>
-            {imageError && (
-              <Text className="text-red-500 text-xs mb-2">{imageError}</Text>
+
+                <View className="mb-4">
+                  <Text className="text-ink-2 text-sm mb-1.5 font-medium">
+                    Note <Text className="text-ink-3 font-normal">(optional)</Text>
+                  </Text>
+                  <Controller
+                    control={control}
+                    name="body"
+                    render={({ field: { onChange, onBlur, value } }) => (
+                      <TextInput
+                        className="bg-shade rounded-xl px-4 py-3.5 text-ink text-base"
+                        placeholder="Tell the story behind this memory..."
+                        placeholderTextColor={colors.ink3}
+                        multiline
+                        numberOfLines={4}
+                        textAlignVertical="top"
+                        style={{ minHeight: 100 }}
+                        onBlur={onBlur}
+                        onChangeText={onChange}
+                        value={value}
+                      />
+                    )}
+                  />
+                </View>
+              </>
             )}
-
-            <View className="mb-4">
-              <Text className="text-ink-2 text-sm mb-1.5 font-medium">
-                Caption <Text className="text-ink-3 font-normal">(optional)</Text>
-              </Text>
-              <Controller
-                control={control}
-                name="title"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <TextInput
-                    className="bg-shade rounded-xl px-4 py-3.5 text-ink text-base"
-                    placeholder="A short caption"
-                    placeholderTextColor={colors.ink3}
-                    onBlur={onBlur}
-                    onChangeText={onChange}
-                    value={value}
-                  />
-                )}
-              />
-            </View>
-
-            <View className="mb-4">
-              <Text className="text-ink-2 text-sm mb-1.5 font-medium">
-                Note <Text className="text-ink-3 font-normal">(optional)</Text>
-              </Text>
-              <Controller
-                control={control}
-                name="body"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <TextInput
-                    className="bg-shade rounded-xl px-4 py-3.5 text-ink text-base"
-                    placeholder="Tell the story behind this memory..."
-                    placeholderTextColor={colors.ink3}
-                    multiline
-                    numberOfLines={4}
-                    textAlignVertical="top"
-                    style={{ minHeight: 100 }}
-                    onBlur={onBlur}
-                    onChangeText={onChange}
-                    value={value}
-                  />
-                )}
-              />
-            </View>
 
             <View className="mb-6">
               <Text className="text-ink-2 text-sm mb-1.5 font-medium">Date</Text>
@@ -227,9 +319,7 @@ export default function Add() {
                     : "Saving..."}
                 </Text>
               ) : (
-                <Text className="text-white font-semibold text-base">
-                  Save Memory
-                </Text>
+                <Text className="text-white font-semibold text-base">Save Memory</Text>
               )}
             </TouchableOpacity>
 

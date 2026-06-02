@@ -14,6 +14,10 @@ module.exports = {
         "letter-paper": "#fdf8ea",
         destructive: "#DC2626",
       },
+      fontFamily: {
+        letter: ['CormorantInfant_400Regular_Italic'],
+        'letter-title': ['CormorantInfant_600SemiBold'],
+      },
     },
   },
   plugins: [],

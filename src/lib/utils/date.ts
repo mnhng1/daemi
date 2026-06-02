@@ -19,3 +19,10 @@ export function formatTimelineDate(dateString: string): string {
 export function toDateKey(dateString: string): string {
   return dateString.slice(0, 10);
 }
+
+export function formatLetterDate(dateString: string): string {
+  const d = new Date(dateString + "T00:00:00");
+  const month = d.toLocaleDateString("en-US", { month: "short" }).toLowerCase();
+  const day = d.getDate();
+  return `${month} ${day}`;
+}

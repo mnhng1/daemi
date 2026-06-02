@@ -1,10 +1,10 @@
 import React from "react";
 import { View, Text, Image } from "react-native";
-import { Memory } from "../../types/database";
+import { MemoryWithAuthor } from "../../types/database";
 import { useMediaUrl } from "../../features/media";
 
 interface Props {
-  memory: Memory;
+  memory: MemoryWithAuthor;
   index: number;
 }
 

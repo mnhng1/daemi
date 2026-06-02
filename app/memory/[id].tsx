@@ -1,10 +1,40 @@
-import { View, Text } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { View, Text, ActivityIndicator, TouchableOpacity } from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useMemory } from "../../src/features/memories";
+import { LetterDetailView } from "../../src/components/memory/letter-detail-view";
+import { PhotoDetailView } from "../../src/components/memory/photo-detail-view";
+import { colors } from "../../src/lib/theme/tokens";
+
 export default function MemoryDetail() {
-  const { id } = useLocalSearchParams();
-  return (
-    <View className="flex-1 items-center justify-center bg-paper">
-      <Text className="text-ink text-lg">Memory {id}</Text>
-    </View>
-  );
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
+  const { data: memory, isLoading, isError } = useMemory(id);
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.paper, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator color={colors.accent} />
+      </SafeAreaView>
+    );
+  }
+
+  if (isError || !memory) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.paper, justifyContent: "center", alignItems: "center" }}>
+        <Text style={{ color: colors.ink, fontSize: 16, marginBottom: 16 }}>Memory not found</Text>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Text style={{ color: colors.accent, fontSize: 16 }}>Go back</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
+
+  switch (memory.type) {
+    case "letter":
+      return <LetterDetailView memory={memory} />;
+    case "photo":
+    default:
+      return <PhotoDetailView memory={memory} />;
+  }
 }

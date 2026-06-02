@@ -1,5 +1,4 @@
 import { View } from "react-native";
-import { Memory } from "../../types/database";
 import { TimelineItem, isMemoryGroup } from "../../features/memories/types";
 import { MemoryCard } from "../memory/memory-card";
 import { MemoryGroupCard } from "../memory/memory-carousel";

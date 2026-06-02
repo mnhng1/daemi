@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase/client";
+import type { MemoryWithAuthor } from "../../types/database";
 import { MemoryTypeFilter } from "./types";
 
 export function useMemories(spaceId: string | undefined, typeFilter: MemoryTypeFilter) {
@@ -8,7 +9,7 @@ export function useMemories(spaceId: string | undefined, typeFilter: MemoryTypeF
     queryFn: async () => {
       let query = supabase
         .from("memories")
-        .select("*")
+        .select("*, author:profiles!created_by_user_id(display_name)")
         .eq("couple_space_id", spaceId!)
         .is("deleted_at", null)
         .order("date_happened", { ascending: false });
@@ -19,7 +20,7 @@ export function useMemories(spaceId: string | undefined, typeFilter: MemoryTypeF
 
       const { data, error } = await query;
       if (error) throw error;
-      return data;
+      return data as unknown as MemoryWithAuthor[];
     },
     enabled: !!spaceId,
   });

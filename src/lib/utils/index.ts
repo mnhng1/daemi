@@ -1,1 +1,2 @@
-export { formatTimelineDate, toDateKey } from "./date";
+export { formatTimelineDate, toDateKey, formatLetterDate } from "./date";
+export { wordCount } from "./text";

@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, Image, Pressable, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
+import { colors } from "../../lib/theme/tokens";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -9,14 +10,21 @@ import Animated, {
   useReducedMotion,
   Easing,
 } from "react-native-reanimated";
-import { Memory } from "../../types/database";
+import { MemoryWithAuthor } from "../../types/database";
 import { useMediaUrl } from "../../features/media";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 const MAX_GRID = 4;
 
-function GridThumbnail({ memory }: { memory: Memory }) {
+function GridThumbnail({ memory }: { memory: MemoryWithAuthor }) {
   const { data: mediaUrl } = useMediaUrl(memory);
+  if (memory.type === "letter") {
+    return (
+      <View className="flex-1 rounded-lg overflow-hidden items-center justify-center" style={{ aspectRatio: 1, backgroundColor: colors.letterPaper }}>
+        <Text className="text-accent text-xs font-semibold uppercase">Letter</Text>
+      </View>
+    );
+  }
   return (
     <View className="flex-1 rounded-lg overflow-hidden" style={{ aspectRatio: 1 }}>
       {mediaUrl ? (
@@ -32,8 +40,21 @@ function GridThumbnail({ memory }: { memory: Memory }) {
   );
 }
 
-function OverflowThumbnail({ memory, count }: { memory: Memory; count: number }) {
+function OverflowThumbnail({ memory, count }: { memory: MemoryWithAuthor; count: number }) {
   const { data: mediaUrl } = useMediaUrl(memory);
+  if (memory.type === "letter") {
+    return (
+      <View className="flex-1 rounded-lg overflow-hidden items-center justify-center" style={{ aspectRatio: 1, backgroundColor: colors.letterPaper }}>
+        <Text className="text-accent text-xs font-semibold uppercase">Letter</Text>
+        <View
+          className="rounded-lg items-center justify-center"
+          style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(42, 37, 32, 0.45)" }]}
+        >
+          <Text className="text-white text-lg font-semibold">+{count}</Text>
+        </View>
+      </View>
+    );
+  }
   return (
     <View className="flex-1 rounded-lg overflow-hidden" style={{ aspectRatio: 1 }}>
       {mediaUrl ? (
@@ -52,7 +73,7 @@ function OverflowThumbnail({ memory, count }: { memory: Memory; count: number })
 }
 
 interface Props {
-  memories: Memory[];
+  memories: MemoryWithAuthor[];
 }
 
 export const MemoryGroupCard = React.memo(function MemoryGroupCard({ memories }: Props) {
