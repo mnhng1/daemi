@@ -8,6 +8,7 @@ import { useMediaUrl } from "../../features/media";
 import { useToggleReaction, useDeleteMemory } from "../../features/memories";
 import { useSession } from "../../features/auth/session-provider";
 import { formatTimelineDate } from "../../lib/utils/date";
+import { errorMessage, logError } from "../../lib/utils/log";
 import { colors } from "../../lib/theme/tokens";
 
 interface Props {
@@ -36,12 +37,19 @@ export function PhotoDetailView({ memory }: Props) {
           onPress: async () => {
             try {
               await deleteMemory.mutateAsync(memory.id);
-              queryClient.removeQueries({ queryKey: ["memories", "detail", memory.id] });
-              router.back();
-              queryClient.invalidateQueries({ queryKey: ["memories"] });
-            } catch {
-              Alert.alert("Error", "Could not delete this memory. Please try again.");
+            } catch (err) {
+              logError("delete-memory:handleDelete", err);
+              Alert.alert(
+                "Error",
+                __DEV__
+                  ? `Could not delete this memory.\n\n${errorMessage(err)}`
+                  : "Could not delete this memory. Please try again."
+              );
+              return;
             }
+            queryClient.removeQueries({ queryKey: ["memories", "detail", memory.id] });
+            router.back();
+            queryClient.invalidateQueries({ queryKey: ["memories"] });
           },
         },
       ]

@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase/client";
 import { useSession } from "../auth/session-provider";
+import { logError } from "../../lib/utils/log";
 import type { MemoryWithAuthor } from "../../types/database";
 
 export function useToggleReaction(memoryId: string) {
@@ -79,6 +80,7 @@ export function useToggleReaction(memoryId: string) {
     },
 
     onError: (_err, _vars, context) => {
+      logError("toggle-reaction", _err);
       if (context?.previousDetail) {
         queryClient.setQueryData(
           ["memories", "detail", memoryId],
