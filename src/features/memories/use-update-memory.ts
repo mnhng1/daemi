@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase/client";
+import { logError } from "../../lib/utils/log";
 
 type UpdateMemoryInput = {
   id: string;
@@ -25,6 +26,9 @@ export function useUpdateMemory() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["memories"] });
+    },
+    onError: (error) => {
+      logError("update-memory", error);
     },
   });
 }

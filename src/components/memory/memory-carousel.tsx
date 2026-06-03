@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, Image, Pressable, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { colors } from "../../lib/theme/tokens";
+import { toDateKey } from "../../lib/utils/date";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -108,7 +109,7 @@ export const MemoryGroupCard = React.memo(function MemoryGroupCard({ memories }:
 
   return (
     <AnimatedPressable
-      onPress={() => router.push(`/memory/${memories[0].id}`)}
+      onPress={() => router.push(`/album/${toDateKey(memories[0].date_happened)}`)}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       accessibilityRole="button"
