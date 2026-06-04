@@ -207,6 +207,7 @@ export type Database = {
     }
     Views: Record<string, never>
     Functions: {
+      list_space_tags: { Args: { space_id: string }; Returns: string[] }
       lookup_space_by_invite_code: {
         Args: { code: string }
         Returns: string

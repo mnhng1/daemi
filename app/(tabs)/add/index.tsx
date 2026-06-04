@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -19,11 +19,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useSession, useCurrentUser } from "../../../src/features/auth";
 import { useCurrentCoupleSpace, usePartner } from "../../../src/features/couple-space";
 import { useCreateMemory } from "../../../src/features/memories";
+import { useSpaceTags } from "../../../src/features/search";
 import { formatTimelineDate } from "../../../src/lib/utils/date";
 import { wordCount } from "../../../src/lib/utils/text";
 import { colors } from "../../../src/lib/theme/tokens";
 import { MemoryTypePicker } from "../../../src/components/add-memory/memory-type-picker";
 import { LetterComposer } from "../../../src/components/add-memory/letter-composer";
+import { TagInput, type TagInputHandle } from "../../../src/components/add-memory/tag-input";
 
 const schema = z.object({
   title: z.string().optional(),
@@ -41,6 +43,9 @@ export default function Add() {
   const { data: partnerName } = usePartner();
   const createMemory = useCreateMemory();
 
+  const spaceId = coupleSpaceData?.couple_spaces?.id;
+  const { data: spaceTags } = useSpaceTags(spaceId);
+
   const [selectedType, setSelectedType] = useState<"photo" | "letter" | null>(null);
   const [image, setImage] = useState<{ uri: string; mimeType: string } | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
@@ -48,6 +53,8 @@ export default function Add() {
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [letterBody, setLetterBody] = useState("");
   const [letterError, setLetterError] = useState<string | null>(null);
+  const [tags, setTags] = useState<string[]>([]);
+  const tagInputRef = useRef<TagInputHandle>(null);
 
   const { control, handleSubmit, reset, setValue, watch } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -70,6 +77,7 @@ export default function Add() {
         setShowDatePicker(false);
         setUploadProgress(null);
         setLetterError(null);
+        setTags([]);
         createMemory.reset();
       };
     }, [reset, createMemory.reset])
@@ -95,6 +103,7 @@ export default function Add() {
     setImage(null);
     setLetterBody("");
     setLetterError(null);
+    setTags([]);
     setSelectedType(null);
     router.replace("/(tabs)/timeline");
   }
@@ -132,6 +141,7 @@ export default function Add() {
         setImageError("Pick a photo to save this memory.");
         return;
       }
+      const finalTags = tagInputRef.current?.flush() ?? tags;
       createMemory.mutate(
         {
           type: "photo",
@@ -142,6 +152,7 @@ export default function Add() {
           title: data.title || undefined,
           body: data.body || undefined,
           dateHappened: data.dateHappened,
+          tags: finalTags,
           onProgress: setUploadProgress,
         },
         { onSuccess: resetForm, onError: () => setUploadProgress(null) }
@@ -276,6 +287,18 @@ export default function Add() {
                         value={value}
                       />
                     )}
+                  />
+                </View>
+
+                <View className="mb-4">
+                  <Text className="text-ink-2 text-sm mb-1.5 font-medium">
+                    Tags <Text className="text-ink-3 font-normal">(optional)</Text>
+                  </Text>
+                  <TagInput
+                    ref={tagInputRef}
+                    value={tags}
+                    onChange={setTags}
+                    suggestions={spaceTags}
                   />
                 </View>
               </>

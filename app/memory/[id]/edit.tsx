@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import { useSession } from "../../../src/features/auth/session-provider";
 import { useCurrentUser } from "../../../src/features/auth";
 import { usePartner } from "../../../src/features/couple-space";
 import { LetterComposer } from "../../../src/components/add-memory/letter-composer";
+import { TagInput, type TagInputHandle } from "../../../src/components/add-memory/tag-input";
 import { formatTimelineDate } from "../../../src/lib/utils/date";
 import { colors } from "../../../src/lib/theme/tokens";
 
@@ -33,6 +34,8 @@ export default function EditMemory() {
   const [body, setBody] = useState<string>("");
   const [dateHappened, setDateHappened] = useState<string>("");
   const [placeName, setPlaceName] = useState<string>("");
+  const [tags, setTags] = useState<string[]>([]);
+  const tagInputRef = useRef<TagInputHandle>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
@@ -42,6 +45,7 @@ export default function EditMemory() {
     setBody(memory.body ?? "");
     setDateHappened(memory.date_happened);
     setPlaceName(memory.place_name ?? "");
+    setTags(memory.tags ?? []);
     setInitialized(true);
   }
 
@@ -105,6 +109,7 @@ export default function EditMemory() {
 
   // Photo meta edit form
   function handleSave() {
+    const finalTags = tagInputRef.current?.flush() ?? tags;
     updateMemory.mutate(
       {
         id: memory!.id,
@@ -112,6 +117,7 @@ export default function EditMemory() {
         body: body.trim() || null,
         date_happened: dateHappened,
         place_name: placeName.trim() || null,
+        tags: finalTags,
       },
       { onSuccess: () => router.back() }
     );
@@ -195,6 +201,13 @@ export default function EditMemory() {
                 value={placeName}
                 onChangeText={setPlaceName}
               />
+            </View>
+
+            <View style={{ marginBottom: 16 }}>
+              <Text style={{ color: colors.ink2, fontSize: 14, marginBottom: 6, fontWeight: "500" }}>
+                Tags <Text style={{ color: colors.ink3, fontWeight: "400" }}>(optional)</Text>
+              </Text>
+              <TagInput ref={tagInputRef} value={tags} onChange={setTags} />
             </View>
 
             <View style={{ marginBottom: 24 }}>

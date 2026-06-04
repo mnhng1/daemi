@@ -3,6 +3,7 @@ import * as Crypto from "expo-crypto";
 import { supabase } from "../../lib/supabase/client";
 import { uploadMemoryImage } from "../media";
 import type { Database } from "../../types/database";
+import { normalizeTags } from "../../lib/utils/text";
 
 type MemoryInsert = Database["public"]["Tables"]["memories"]["Insert"];
 
@@ -11,6 +12,7 @@ type CreateMemoryBase = {
   userId: string;
   title?: string;
   dateHappened: string;
+  tags?: string[];
 };
 
 type CreatePhotoInput = CreateMemoryBase & {
@@ -56,6 +58,7 @@ export function useCreateMemory() {
         storage_key: storageKey,
         date_happened: input.dateHappened,
         created_by_user_id: input.userId,
+        tags: normalizeTags(input.tags),
       };
 
       const { data, error } = await supabase
@@ -68,6 +71,8 @@ export function useCreateMemory() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["memories"] });
+      queryClient.invalidateQueries({ queryKey: ["search"] });
+      queryClient.invalidateQueries({ queryKey: ["space-tags"] });
     },
   });
 }

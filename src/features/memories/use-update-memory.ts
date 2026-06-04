@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase/client";
 import { logError } from "../../lib/utils/log";
+import { normalizeTags } from "../../lib/utils/text";
 
 type UpdateMemoryInput = {
   id: string;
@@ -8,16 +9,18 @@ type UpdateMemoryInput = {
   body?: string | null;
   date_happened?: string;
   place_name?: string | null;
+  tags?: string[];
 };
 
 export function useUpdateMemory() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, ...fields }: UpdateMemoryInput) => {
+    mutationFn: async ({ id, tags, ...fields }: UpdateMemoryInput) => {
+      const payload = tags === undefined ? fields : { ...fields, tags: normalizeTags(tags) };
       const { data, error } = await supabase
         .from("memories")
-        .update(fields)
+        .update(payload)
         .eq("id", id)
         .select()
         .single();
@@ -26,6 +29,8 @@ export function useUpdateMemory() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["memories"] });
+      queryClient.invalidateQueries({ queryKey: ["search"] });
+      queryClient.invalidateQueries({ queryKey: ["space-tags"] });
     },
     onError: (error) => {
       logError("update-memory", error);
