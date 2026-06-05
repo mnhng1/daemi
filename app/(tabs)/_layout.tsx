@@ -3,10 +3,12 @@ import { ActivityIndicator, View } from "react-native";
 import { colors } from "../../src/lib/theme/tokens";
 import { useSession } from "../../src/features/auth";
 import { useCurrentCoupleSpace } from "../../src/features/couple-space";
+import { useRealtimeSync } from "../../src/features/realtime";
 
 export default function TabLayout() {
   const { session, isLoading: sessionLoading } = useSession();
   const { data: coupleSpaceData, isLoading: spaceLoading } = useCurrentCoupleSpace();
+  useRealtimeSync(coupleSpaceData?.couple_space_id);
 
   if (sessionLoading || (session && spaceLoading)) {
     return (
