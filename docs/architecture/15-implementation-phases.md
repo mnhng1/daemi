@@ -78,7 +78,7 @@
 - Collections list
 - Collection detail
 - Create collection
-- Add memory to collection
+- Add memory to collection (either partner; see `10-collections.md` Authorization)
 
 ## Phase 10 — Video and Ticket
 

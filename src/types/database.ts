@@ -212,6 +212,10 @@ export type Database = {
         Args: { code: string }
         Returns: string
       }
+      set_memory_collection: {
+        Args: { p_memory_id: string; p_collection_id: string | null }
+        Returns: Database["public"]["Tables"]["memories"]["Row"][]
+      }
     }
     Enums: {
       member_role: "owner" | "member"

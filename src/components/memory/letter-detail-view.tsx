@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity, Pressable, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -6,6 +6,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { MemoryWithAuthor } from "../../types/database";
 import { useToggleReaction, useDeleteMemory } from "../../features/memories";
 import { useSession } from "../../features/auth/session-provider";
+import { useCollections } from "../../features/collections/use-collections";
+import { CollectionPickerSheet } from "../collections/collection-picker-sheet";
 import { formatLetterDate } from "../../lib/utils/date";
 import { wordCount } from "../../lib/utils/text";
 import { errorMessage, logError } from "../../lib/utils/log";
@@ -24,6 +26,17 @@ export function LetterDetailView({ memory }: Props) {
   const deleteMemory = useDeleteMemory();
   const authorName = memory.author?.display_name?.toUpperCase() ?? "UNKNOWN";
   const isAuthor = memory.created_by_user_id === userId;
+  const [pickerVisible, setPickerVisible] = useState(false);
+  const { data: collections } = useCollections(memory.couple_space_id);
+  const currentCollection = collections?.find((c) => c.id === memory.collection_id) ?? null;
+  // Drive the chip's state off collection_id (known immediately) so an assigned
+  // memory doesn't flash "Add to collection" while the collections query loads.
+  const inACollection = memory.collection_id !== null;
+  const collectionLabel = currentCollection
+    ? `In: ${currentCollection.name}`
+    : inACollection
+      ? "In a collection"
+      : "Add to collection";
 
   function handleDelete() {
     Alert.alert(
@@ -160,11 +173,49 @@ export function LetterDetailView({ memory }: Props) {
           </Text>
         )}
 
+        <Pressable
+          onPress={() => setPickerVisible(true)}
+          accessibilityRole="button"
+          accessibilityLabel={
+            inACollection
+              ? `${collectionLabel}. Tap to change.`
+              : "Add to collection"
+          }
+          style={{
+            marginTop: 16,
+            alignSelf: "flex-start",
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: inACollection ? colors.accent : colors.ink4,
+            backgroundColor: inACollection ? colors.accentSoft : colors.surface,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 13,
+              color: inACollection ? colors.accent : colors.ink3,
+              fontWeight: inACollection ? "600" : "400",
+            }}
+          >
+            {collectionLabel}
+          </Text>
+        </Pressable>
+
         <View style={{ marginTop: 48, alignItems: "center" }}>
           <View style={{ width: 32, height: 2, backgroundColor: colors.ink4, marginBottom: 16 }} />
           <Text style={{ color: colors.ink3, fontSize: 12, fontStyle: "italic" }}>Written with love</Text>
         </View>
       </ScrollView>
+
+      <CollectionPickerSheet
+        visible={pickerVisible}
+        onClose={() => setPickerVisible(false)}
+        coupleSpaceId={memory.couple_space_id}
+        memoryId={memory.id}
+        currentCollectionId={memory.collection_id}
+      />
     </SafeAreaView>
   );
 }
