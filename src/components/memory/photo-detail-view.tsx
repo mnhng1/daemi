@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, Image, ScrollView, TouchableOpacity, Pressable, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -7,6 +7,8 @@ import { MemoryWithAuthor } from "../../types/database";
 import { useMediaUrl } from "../../features/media";
 import { useToggleReaction, useDeleteMemory } from "../../features/memories";
 import { useSession } from "../../features/auth/session-provider";
+import { useCollections } from "../../features/collections/use-collections";
+import { CollectionPickerSheet } from "../collections/collection-picker-sheet";
 import { formatTimelineDate } from "../../lib/utils/date";
 import { errorMessage, logError } from "../../lib/utils/log";
 import { colors } from "../../lib/theme/tokens";
@@ -24,6 +26,17 @@ export function PhotoDetailView({ memory }: Props) {
   const toggleReaction = useToggleReaction(memory.id);
   const deleteMemory = useDeleteMemory();
   const isAuthor = memory.created_by_user_id === userId;
+  const [pickerVisible, setPickerVisible] = useState(false);
+  const { data: collections } = useCollections(memory.couple_space_id);
+  const currentCollection = collections?.find((c) => c.id === memory.collection_id) ?? null;
+  // Drive the chip's state off collection_id (known immediately) so an assigned
+  // memory doesn't flash "Add to collection" while the collections query loads.
+  const inACollection = memory.collection_id !== null;
+  const collectionLabel = currentCollection
+    ? `In: ${currentCollection.name}`
+    : inACollection
+      ? "In a collection"
+      : "Add to collection";
 
   function handleDelete() {
     Alert.alert(
@@ -155,8 +168,46 @@ export function PhotoDetailView({ memory }: Props) {
               Your partner hearted this
             </Text>
           )}
+
+          <Pressable
+            onPress={() => setPickerVisible(true)}
+            accessibilityRole="button"
+            accessibilityLabel={
+              inACollection
+                ? `${collectionLabel}. Tap to change.`
+                : "Add to collection"
+            }
+            style={{
+              marginTop: 16,
+              alignSelf: "flex-start",
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              borderRadius: 14,
+              borderWidth: 1,
+              borderColor: inACollection ? colors.accent : colors.ink4,
+              backgroundColor: inACollection ? colors.accentSoft : colors.surface,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 13,
+                color: inACollection ? colors.accent : colors.ink3,
+                fontWeight: inACollection ? "600" : "400",
+              }}
+            >
+              {collectionLabel}
+            </Text>
+          </Pressable>
         </View>
       </ScrollView>
+
+      <CollectionPickerSheet
+        visible={pickerVisible}
+        onClose={() => setPickerVisible(false)}
+        coupleSpaceId={memory.couple_space_id}
+        memoryId={memory.id}
+        currentCollectionId={memory.collection_id}
+      />
     </SafeAreaView>
   );
 }

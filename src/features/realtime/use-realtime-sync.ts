@@ -7,6 +7,8 @@ function invalidateMemoryQueries(queryClient: ReturnType<typeof useQueryClient>)
   queryClient.invalidateQueries({ queryKey: ["memories"] });
   queryClient.invalidateQueries({ queryKey: ["search"] });
   queryClient.invalidateQueries({ queryKey: ["space-tags"] });
+  // Collection cards derive cover/count from memories — refresh them too.
+  queryClient.invalidateQueries({ queryKey: ["collections"] });
 }
 
 export function useRealtimeSync(coupleSpaceId: string | undefined): void {
@@ -43,6 +45,18 @@ export function useRealtimeSync(coupleSpaceId: string | undefined): void {
           // and search cards — invalidate those two, not ["space-tags"].
           queryClient.invalidateQueries({ queryKey: ["memories"] });
           queryClient.invalidateQueries({ queryKey: ["search"] });
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "collections",
+          filter: `couple_space_id=eq.${coupleSpaceId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["collections"] });
         },
       )
       .subscribe((status) => {
