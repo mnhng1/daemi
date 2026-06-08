@@ -4,6 +4,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useMemory } from "../../../src/features/memories";
 import { LetterDetailView } from "../../../src/components/memory/letter-detail-view";
 import { PhotoDetailView } from "../../../src/components/memory/photo-detail-view";
+import { VideoDetailView } from "../../../src/components/memory/video-detail-view";
+import { TicketDetailView } from "../../../src/components/memory/ticket-detail-view";
 import { colors } from "../../../src/lib/theme/tokens";
 
 export default function MemoryDetail() {
@@ -33,6 +35,10 @@ export default function MemoryDetail() {
   switch (memory.type) {
     case "letter":
       return <LetterDetailView memory={memory} />;
+    case "video":
+      return <VideoDetailView memory={memory} />;
+    case "ticket":
+      return <TicketDetailView memory={memory} />;
     case "photo":
     default:
       return <PhotoDetailView memory={memory} />;

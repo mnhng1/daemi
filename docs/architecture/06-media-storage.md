@@ -42,6 +42,42 @@ This replaces the Supabase Storage RLS policies with equivalent logic in the Edg
 6. Client inserts the memory row with `storage_key` (the R2 object path).
 7. For display, client calls the Edge Function with `{ action: "download", coupleSpaceId, memoryId }` to get a presigned GET URL (1 hour expiry).
 
+## Video Upload (Phase 10)
+
+Video is stored in R2 only — no external links/embeds. The upload path is chosen
+by file size, but both paths land the original at the same `storage_key`.
+
+### Small video (≤ ~5 GB) — single PUT
+
+Identical to the photo path: one presigned PUT via `media-presign`. A poster
+frame is extracted client-side and uploaded to the `thumb.*` key.
+
+### Heavy video (> ~5 GB) — multipart (Phase 10B)
+
+R2 rejects a single presigned PUT above ~5 GB, so large files use S3-compatible
+**multipart upload** (parts ≤5 GB, ≤10,000 parts, ~5 TB object ceiling). This is
+resumable (re-sign and retry only the failed part) and runs in a durable
+background queue (see `12-offline-queue.md`).
+
+`media-presign` gains multipart actions:
+
+```txt
+create-multipart  → { uploadId, key }
+sign-part         → presigned PUT URL for part N of uploadId
+complete-multipart→ assembles parts (ordered ETag list) into the final object
+abort-multipart   → cancels and frees incomplete parts
+```
+
+The Edge Function verifies JWT + couple-space membership on every action, exactly
+as the single-PUT path does.
+
+## Video Playback
+
+Embedded in-app via `expo-video`, streaming from a short-lived presigned GET URL
+(same `download` action as photos). R2 honors HTTP range requests, so playback is
+progressive — it starts without downloading the whole file. No transcoding/HLS
+for now; an adaptive-streaming pass is future work.
+
 ## Download Flow
 
 Presigned GET URLs are generated on demand via the Edge Function. They are not stored in the database — only the `storage_key` (object path) is persisted. This eliminates the signed URL expiry problem.
@@ -84,12 +120,17 @@ Both backends coexist during migration — the client checks `storage_key` first
 | Supabase free plan (auth + DB) | $0 | $0 |
 | **Total** | **~$1.50/mo** | **~$7.55/mo** |
 
+## Cost Note (video)
+
+The 100 GB / ~$1.50 estimate above assumes photos. Heavy videos change the
+magnitude, not the model: R2 is still ~$0.015/GB/mo with zero egress, so even
+1 TB of video is ~$15/mo. No per-minute streaming fees (unlike Cloudflare
+Stream / Mux), which is the main reason for the R2-only decision.
+
 ## Future Work
 
 - Image compression before upload (client-side)
-- Thumbnail generation (R2 event notification + Cloudflare Worker)
-- Video compression
-- Video duration validation
-- Background uploads with XMLHttpRequest progress tracking
-- Offline retry queue
-- Upload progress UI
+- Thumbnail generation moved server-side (R2 event notification + Cloudflare Worker)
+- Adaptive video streaming (HLS/DASH transcode) — currently progressive download only
+- Faststart/fragmented MP4 remux for smoother seeking on large originals
+- Native background-upload module for heavy multipart (Phase 10B; requires EAS dev build)

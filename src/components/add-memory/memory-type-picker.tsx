@@ -55,7 +55,7 @@ function TypeCard({ icon, title, subtitle, onPress, disabled }: TypeCardProps) {
 }
 
 interface Props {
-  onSelect: (type: "photo" | "letter") => void;
+  onSelect: (type: "photo" | "video" | "letter" | "ticket") => void;
   onDismiss: () => void;
 }
 
@@ -78,7 +78,7 @@ export function MemoryTypePicker({ onSelect, onDismiss }: Props) {
     setTimeout(onDismiss, 220);
   }
 
-  function handleSelect(type: "photo" | "letter") {
+  function handleSelect(type: "photo" | "video" | "letter" | "ticket") {
     animateDismiss();
     setTimeout(() => onSelect(type), 220);
   }
@@ -131,8 +131,8 @@ export function MemoryTypePicker({ onSelect, onDismiss }: Props) {
               <TypeCard
                 icon="video-outline"
                 title="video"
-                subtitle="up to 30s"
-                disabled
+                subtitle="share a clip"
+                onPress={() => handleSelect("video")}
               />
             </View>
             <View style={styles.gridRow}>
@@ -146,7 +146,7 @@ export function MemoryTypePicker({ onSelect, onDismiss }: Props) {
                 icon="ticket-outline"
                 title="ticket"
                 subtitle="stub · receipt · postcard"
-                disabled
+                onPress={() => handleSelect("ticket")}
               />
             </View>
           </View>

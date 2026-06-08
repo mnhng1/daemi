@@ -5,7 +5,9 @@ import { MemoryTypeFilter } from "../../features/memories/types";
 const FILTERS: { key: MemoryTypeFilter; label: string }[] = [
   { key: "all", label: "All" },
   { key: "photo", label: "Photos" },
+  { key: "video", label: "Videos" },
   { key: "letter", label: "Letters" },
+  { key: "ticket", label: "Tickets" },
 ];
 
 interface Props {

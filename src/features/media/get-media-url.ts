@@ -22,3 +22,26 @@ export async function getMediaUrl(memory: {
   }
   return memory.media_url;
 }
+
+/** Presign an arbitrary key (e.g. thumb.jpg) within a memory's folder. */
+export async function getMediaUrlForKey(
+  coupleSpaceId: string,
+  memoryId: string,
+  key: string,
+  expires?: number,
+): Promise<string> {
+  const body: Record<string, unknown> = {
+    action: "download",
+    coupleSpaceId,
+    memoryId,
+    key,
+  };
+  if (expires !== undefined) {
+    body.expires = expires;
+  }
+  const { data, error } = await supabase.functions.invoke("media-presign", { body });
+  if (error) throw error;
+  const { url } = data as { url: string };
+  if (!url) throw new Error("media-presign returned no URL");
+  return url;
+}

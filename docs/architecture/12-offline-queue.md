@@ -10,6 +10,21 @@ MVP should only handle:
 - upload error state
 - retry button if upload fails before navigation
 
+## Merge with Heavy Video Upload (Phase 10B)
+
+The durable queue is built in Phase 10B because heavy video (multipart, possibly
+multi-hour) needs the same machinery the offline queue would: a restart-surviving
+local store, resume, and queued/uploading cards on the timeline. The two are
+implemented together rather than as separate efforts.
+
+Heavy-upload-specific additions to the queue shape below:
+
+- `uploadId` — R2 multipart upload ID
+- `parts[]` — `{ partNumber, etag, status }` so resume re-signs only failed parts
+- `bytesUploaded` / `bytesTotal` — for per-file progress
+- background execution via a native upload module (requires an EAS dev build) so
+  uploads continue when the app is locked/backgrounded
+
 ## Later Offline Goals
 
 If user creates a memory offline:
@@ -25,9 +40,10 @@ MVP:
 
 - AsyncStorage for simple failed drafts
 
-Later:
+Phase 10B / Later:
 
-- Expo SQLite for durable local queue
+- Expo SQLite for the durable local queue (required for multipart part-tracking
+  and resume across app restarts)
 
 ## Queued Memory Shape
 

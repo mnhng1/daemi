@@ -8,9 +8,11 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.daemi.app"
     },
     "android": {
+      "package": "com.daemi.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -40,7 +42,8 @@
           "cameraPermission": "Daemi needs access to your camera to take photos."
         }
       ],
-      "expo-splash-screen"
+      "expo-splash-screen",
+      "expo-video"
     ]
   }
 }

@@ -69,8 +69,12 @@ Memory {
   type: 'photo' | 'video' | 'letter' | 'ticket'
   title: string | null
   body: string | null
-  media_url: string | null
-  thumbnail_url: string | null
+  media_url: string | null         // legacy Supabase Storage URL (deprecated)
+  storage_key: string | null       // R2 object path for the original media
+  thumbnail_url: string | null     // poster/thumbnail (photo, video, ticket)
+  duration_seconds: int | null     // video only
+  media_size_bytes: bigint | null  // video/photo; drives single-PUT vs multipart routing
+  media_mime: string | null        // e.g. 'video/mp4'
   date_happened: date
   place_name: string | null
   tags: string[]
@@ -81,6 +85,8 @@ Memory {
   updated_at: timestamptz
 }
 ```
+
+`storage_key` was added in Phase 4 (R2 migration) but is not reflected above historically; `duration_seconds`, `media_size_bytes`, and `media_mime` are added in Phase 10 for video. All are nullable and only populated for the relevant types.
 
 ## collections
 
@@ -124,3 +130,5 @@ MemoryReaction {
 - Tags are stored as lowercase string array in MVP.
 - Collection is optional.
 - A memory belongs to at most one collection.
+- Video is stored in R2 only (no external links/embeds). `storage_key` points at the original; playback streams from a presigned GET via `expo-video`.
+- Video length is unbounded; files over the single-PUT ceiling (~5 GB) upload via S3 multipart (see `06-media-storage.md`). `media_size_bytes` is used client-side to choose the upload path.
