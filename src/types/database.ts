@@ -99,6 +99,9 @@ export type Database = {
           tags: string[]
           collection_id: string | null
           created_by_user_id: string
+          duration_seconds: number | null
+          media_size_bytes: number | null
+          media_mime: string | null
           deleted_at: string | null
           created_at: string
           updated_at: string
@@ -117,6 +120,9 @@ export type Database = {
           tags?: string[]
           collection_id?: string | null
           created_by_user_id: string
+          duration_seconds?: number | null
+          media_size_bytes?: number | null
+          media_mime?: string | null
           deleted_at?: string | null
           created_at?: string
           updated_at?: string
@@ -135,6 +141,9 @@ export type Database = {
           tags?: string[]
           collection_id?: string | null
           created_by_user_id?: string
+          duration_seconds?: number | null
+          media_size_bytes?: number | null
+          media_mime?: string | null
           deleted_at?: string | null
           created_at?: string
           updated_at?: string

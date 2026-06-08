@@ -25,6 +25,8 @@ import { wordCount } from "../../../src/lib/utils/text";
 import { colors } from "../../../src/lib/theme/tokens";
 import { MemoryTypePicker } from "../../../src/components/add-memory/memory-type-picker";
 import { LetterComposer } from "../../../src/components/add-memory/letter-composer";
+import { VideoComposer, type VideoSendPayload } from "../../../src/components/add-memory/video-composer";
+import { TicketComposer, type TicketSendPayload } from "../../../src/components/add-memory/ticket-composer";
 import { TagInput, type TagInputHandle } from "../../../src/components/add-memory/tag-input";
 
 const schema = z.object({
@@ -46,7 +48,10 @@ export default function Add() {
   const spaceId = coupleSpaceData?.couple_spaces?.id;
   const { data: spaceTags } = useSpaceTags(spaceId);
 
-  const [selectedType, setSelectedType] = useState<"photo" | "letter" | null>(null);
+  const [selectedType, setSelectedType] = useState<"photo" | "video" | "letter" | "ticket" | null>(null);
+  // Bumped on every focus so the type picker remounts and replays its entrance
+  // animation while the Add tab is actually visible (see useFocusEffect below).
+  const [focusKey, setFocusKey] = useState(0);
   const [image, setImage] = useState<{ uri: string; mimeType: string } | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -69,16 +74,26 @@ export default function Add() {
 
   useFocusEffect(
     useCallback(() => {
+      // Arriving at the Add tab always starts fresh on the type picker. Tab
+      // screens stay mounted (and react-native-screens detaches inactive ones),
+      // so resetting only on blur could leave the picker mounted off-screen with
+      // its entrance animation already spent — the screen then reads as blank on
+      // return. Reset on focus and bump focusKey to remount the picker so its
+      // entrance animation replays while visible. The native media picker does
+      // not fire navigation focus/blur, so an in-progress compose is preserved.
+      setSelectedType(null);
+      reset();
+      setImage(null);
+      setImageError(null);
+      setShowDatePicker(false);
+      setUploadProgress(null);
+      setLetterBody("");
+      setLetterError(null);
+      setTags([]);
+      createMemory.reset();
+      setFocusKey((k) => k + 1);
       return () => {
         setSelectedType(null);
-        reset();
-        setImage(null);
-        setImageError(null);
-        setShowDatePicker(false);
-        setUploadProgress(null);
-        setLetterError(null);
-        setTags([]);
-        createMemory.reset();
       };
     }, [reset, createMemory.reset])
   );
@@ -183,10 +198,54 @@ export default function Add() {
     );
   }
 
+  function handleVideoSend(payload: VideoSendPayload) {
+    const coupleSpaceId = coupleSpaceData?.couple_spaces?.id;
+    if (!coupleSpaceId || !session?.user.id) return;
+    createMemory.mutate(
+      {
+        type: "video",
+        coupleSpaceId,
+        userId: session.user.id,
+        videoUri: payload.videoUri,
+        mimeType: payload.mimeType,
+        durationSeconds: payload.durationSeconds,
+        sizeBytes: payload.sizeBytes,
+        posterUri: payload.posterUri,
+        title: payload.title,
+        body: payload.body,
+        dateHappened: payload.dateHappened,
+        tags: payload.tags,
+        onProgress: setUploadProgress,
+      },
+      { onSuccess: resetForm, onError: () => setUploadProgress(null) }
+    );
+  }
+
+  function handleTicketSend(payload: TicketSendPayload) {
+    const coupleSpaceId = coupleSpaceData?.couple_spaces?.id;
+    if (!coupleSpaceId || !session?.user.id) return;
+    createMemory.mutate(
+      {
+        type: "ticket",
+        coupleSpaceId,
+        userId: session.user.id,
+        title: payload.title,
+        body: payload.body,
+        imageUri: payload.imageUri,
+        mimeType: payload.mimeType,
+        dateHappened: payload.dateHappened,
+        tags: payload.tags,
+        onProgress: setUploadProgress,
+      },
+      { onSuccess: resetForm, onError: () => setUploadProgress(null) }
+    );
+  }
+
   if (!selectedType) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.shade }} edges={["top"]}>
         <MemoryTypePicker
+          key={focusKey}
           onSelect={setSelectedType}
           onDismiss={() => router.replace("/(tabs)/timeline")}
         />
@@ -201,6 +260,33 @@ export default function Add() {
         authorName={currentUser?.display_name ?? null}
         isPending={createMemory.isPending}
         onSend={handleLetterSend}
+        onCancel={() => setSelectedType(null)}
+      />
+    );
+  }
+
+  if (selectedType === "video") {
+    return (
+      <VideoComposer
+        isPending={createMemory.isPending}
+        uploadProgress={uploadProgress}
+        onSend={handleVideoSend}
+        onCancel={() => setSelectedType(null)}
+        onAbort={() => {
+          createMemory.abort();
+          createMemory.reset();
+          setUploadProgress(null);
+          setSelectedType(null);
+        }}
+      />
+    );
+  }
+
+  if (selectedType === "ticket") {
+    return (
+      <TicketComposer
+        isPending={createMemory.isPending}
+        onSend={handleTicketSend}
         onCancel={() => setSelectedType(null)}
       />
     );

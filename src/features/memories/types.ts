@@ -1,6 +1,6 @@
 import { MemoryWithAuthor } from "../../types/database";
 
-export type MemoryTypeFilter = "all" | "photo" | "letter";
+export type MemoryTypeFilter = "all" | "photo" | "video" | "letter" | "ticket";
 
 export interface TimelineDateSection {
   title: string;

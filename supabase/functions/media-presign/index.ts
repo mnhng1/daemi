@@ -79,6 +79,8 @@ Deno.serve(async (req: Request) => {
     memoryId: string;
     mimeType?: string;
     key?: string;
+    variant?: "original" | "thumb";
+    expires?: number;
   };
   try {
     body = await req.json();
@@ -108,17 +110,26 @@ Deno.serve(async (req: Request) => {
   }
 
   if (action === "upload") {
-    if (!mimeType || !ALLOWED_MIME_TYPES.has(mimeType)) {
-      return jsonResponse({ error: "Unsupported or missing mimeType" }, 400);
-    }
+    const variant = body.variant ?? "original";
 
-    const ext = MIME_TO_EXT[mimeType];
-    const key = `couple-spaces/${coupleSpaceId}/memories/${memoryId}/original.${ext}`;
+    let uploadMimeType: string;
+    let key: string;
+    if (variant === "thumb") {
+      uploadMimeType = "image/jpeg";
+      key = `couple-spaces/${coupleSpaceId}/memories/${memoryId}/thumb.jpg`;
+    } else {
+      if (!mimeType || !ALLOWED_MIME_TYPES.has(mimeType)) {
+        return jsonResponse({ error: "Unsupported or missing mimeType" }, 400);
+      }
+      const ext = MIME_TO_EXT[mimeType];
+      uploadMimeType = mimeType;
+      key = `couple-spaces/${coupleSpaceId}/memories/${memoryId}/original.${ext}`;
+    }
 
     const url = (await r2.sign(
       new Request(`${R2_URL}/${BUCKET}/${key}?X-Amz-Expires=600`, {
         method: "PUT",
-        headers: { "Content-Type": mimeType },
+        headers: { "Content-Type": uploadMimeType },
       }),
       { aws: { signQuery: true } },
     )).url.toString();
@@ -145,8 +156,11 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: "Memory not found in this couple space" }, 404);
   }
 
+  const requestedExpires = typeof body.expires === "number" ? body.expires : 3600;
+  const clampedExpires = Math.min(requestedExpires, 43200);
+
   const url = (await r2.sign(
-    new Request(`${R2_URL}/${BUCKET}/${body.key}?X-Amz-Expires=3600`),
+    new Request(`${R2_URL}/${BUCKET}/${body.key}?X-Amz-Expires=${clampedExpires}`),
     { aws: { signQuery: true } },
   )).url.toString();
 

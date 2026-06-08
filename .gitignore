@@ -16,3 +16,7 @@ android/
 coverage/
 .omc/
 .agents/
+
+# Standalone design prototype (large, generated). Decoded readable source
+# lives in docs/prototype/src/ instead.
+Dear Us - Prototype (standalone).html

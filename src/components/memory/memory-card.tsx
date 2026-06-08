@@ -12,6 +12,8 @@ import Animated, {
 import { MemoryWithAuthor } from "../../types/database";
 import { PhotoMemoryCard } from "./photo-memory-card";
 import { LetterMemoryCard } from "./letter-memory-card";
+import { VideoMemoryCard } from "./video-memory-card";
+import { TicketMemoryCard } from "./ticket-memory-card";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -52,11 +54,18 @@ export const MemoryCard = React.memo(function MemoryCard({ memory, index }: Prop
       accessibilityLabel={memory.title ?? `${memory.type} memory`}
       style={animatedStyle}
     >
-      {memory.type === "letter" ? (
-        <LetterMemoryCard memory={memory} />
-      ) : (
-        <PhotoMemoryCard memory={memory} index={index} />
-      )}
+      {(() => {
+        switch (memory.type) {
+          case "video":
+            return <VideoMemoryCard memory={memory} index={index} />;
+          case "ticket":
+            return <TicketMemoryCard memory={memory} />;
+          case "letter":
+            return <LetterMemoryCard memory={memory} />;
+          default:
+            return <PhotoMemoryCard memory={memory} index={index} />;
+        }
+      })()}
     </AnimatedPressable>
   );
 });
