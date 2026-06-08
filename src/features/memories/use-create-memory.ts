@@ -5,6 +5,13 @@ import { supabase } from "../../lib/supabase/client";
 import { uploadMemoryImage } from "../media";
 import type { Database } from "../../types/database";
 import { normalizeTags } from "../../lib/utils/text";
+import { insertQueueRow, refreshQueue } from '../queue';
+
+const MULTIPART_THRESHOLD_BYTES = 4.5 * 1024 * 1024 * 1024;
+
+function getCurrentISOTimestamp(): string {
+  return new Date().toISOString();
+}
 
 type MemoryInsert = Database["public"]["Tables"]["memories"]["Insert"];
 
@@ -85,6 +92,53 @@ export function useCreateMemory() {
         const { key } = await handle.result;
         storageKey = key;
       } else if (input.type === "video") {
+        if ((input.sizeBytes ?? 0) > MULTIPART_THRESHOLD_BYTES) {
+          const localId = Crypto.randomUUID()
+
+          // Upload poster immediately (single-PUT)
+          const posterHandle = uploadMemoryImage({
+            fileUri: input.posterUri,
+            coupleSpaceId: input.coupleSpaceId,
+            memoryId,
+            mimeType: 'image/jpeg',
+            variant: 'thumb',
+          })
+          const { key: thumbnailKey } = await posterHandle.result
+
+          await insertQueueRow({
+            localId,
+            coupleSpaceId: input.coupleSpaceId,
+            memoryId,
+            userId: input.userId,
+            type: 'video',
+            title: input.title ?? null,
+            body: input.body ?? null,
+            localMediaUri: input.videoUri,
+            posterUri: input.posterUri,
+            thumbnailKey,
+            mimeType: input.mimeType,
+            dateHappened: input.dateHappened,
+            tags: normalizeTags(input.tags ?? []),
+            placeName: input.place_name ?? null,
+            latitude: input.latitude ?? null,
+            longitude: input.longitude ?? null,
+            durationSeconds: input.durationSeconds || null,
+            mediaSizeBytes: input.sizeBytes,
+            createdAt: getCurrentISOTimestamp(),
+            status: 'queued',
+            error: null,
+            retryCount: 0,
+            uploadId: null,
+            uploadKey: null,
+            parts: [],
+            bytesUploaded: 0,
+            bytesTotal: 0,
+          })
+
+          refreshQueue()
+          return { id: memoryId, type: 'video' as const, _queued: true } as any
+        }
+        // existing single-PUT code continues unchanged...
         // Upload the original video — store abort handle so the host can cancel
         const videoHandle = uploadMemoryImage({
           fileUri: input.videoUri,

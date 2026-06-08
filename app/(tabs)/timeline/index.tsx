@@ -1,8 +1,9 @@
 import { useState, useMemo, useCallback } from "react";
 import { View, SectionList, RefreshControl } from "react-native";
 import { useCurrentCoupleSpace } from "../../../src/features/couple-space";
-import { useMemories, groupMemoriesByDate, isMemoryGroup } from "../../../src/features/memories";
-import { MemoryTypeFilter, TimelineItem, MemoryGroup } from "../../../src/features/memories/types";
+import { useMemoriesWithQueue, groupMemoriesByDate, isMemoryGroup } from "../../../src/features/memories";
+import { MemoryTypeFilter, TimelineItem, MemoryGroup, isQueuedMemory } from "../../../src/features/memories/types";
+import type { MemoryWithAuthor } from "../../../src/types/database";
 import { TimelineHeader } from "../../../src/components/timeline/timeline-header";
 import { TimelineTypeFilters } from "../../../src/components/timeline/timeline-type-filters";
 import { TimelineDateHeader } from "../../../src/components/timeline/timeline-date-header";
@@ -16,17 +17,24 @@ export default function Timeline() {
   const [typeFilter, setTypeFilter] = useState<MemoryTypeFilter>("all");
   const { data: coupleSpace } = useCurrentCoupleSpace();
   const spaceId = coupleSpace?.couple_spaces.id;
-  const { data: memories, isLoading, isError, refetch } = useMemories(spaceId, typeFilter);
+  const { data: memories, isLoading, isError, refetch } = useMemoriesWithQueue(spaceId, typeFilter);
 
   const sections = useMemo(() => {
-    const raw = groupMemoriesByDate(memories ?? []);
-    return raw.map((section) => {
+    const all = memories ?? [];
+    const queued = all.filter(isQueuedMemory);
+    const remote = all.filter((m): m is MemoryWithAuthor => !isQueuedMemory(m));
+    const remoteSections = groupMemoriesByDate(remote).map((section) => {
       if (section.data.length <= 1) {
         return section as { title: string; dateKey: string; data: TimelineItem[] };
       }
       const group: MemoryGroup = { _group: true, memories: section.data, id: section.dateKey };
       return { title: section.title, dateKey: section.dateKey, data: [group] as TimelineItem[] };
     });
+    if (queued.length === 0) return remoteSections;
+    return [
+      { title: "Uploading", dateKey: "__queued__", data: queued as TimelineItem[] },
+      ...remoteSections,
+    ];
   }, [memories]);
 
   const renderSectionHeader = useCallback(

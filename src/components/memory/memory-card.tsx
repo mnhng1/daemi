@@ -10,19 +10,27 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 import { MemoryWithAuthor } from "../../types/database";
+import { isQueuedMemory } from "../../features/memories";
+import type { QueuedMemory } from "../../features/queue";
 import { PhotoMemoryCard } from "./photo-memory-card";
 import { LetterMemoryCard } from "./letter-memory-card";
 import { VideoMemoryCard } from "./video-memory-card";
 import { TicketMemoryCard } from "./ticket-memory-card";
+import { QueuedMemoryCard } from "./queued-memory-card";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface Props {
+  memory: MemoryWithAuthor | QueuedMemory;
+  index: number;
+}
+
+interface InnerProps {
   memory: MemoryWithAuthor;
   index: number;
 }
 
-export const MemoryCard = React.memo(function MemoryCard({ memory, index }: Props) {
+function MemoryCardInner({ memory, index }: InnerProps) {
   const router = useRouter();
   const reduceMotion = useReducedMotion();
   const scale = useSharedValue(1);
@@ -68,4 +76,9 @@ export const MemoryCard = React.memo(function MemoryCard({ memory, index }: Prop
       })()}
     </AnimatedPressable>
   );
+}
+
+export const MemoryCard = React.memo(function MemoryCard({ memory, index }: Props) {
+  if (isQueuedMemory(memory)) return <QueuedMemoryCard item={memory} />;
+  return <MemoryCardInner memory={memory} index={index} />;
 });
