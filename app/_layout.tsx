@@ -14,8 +14,26 @@ import {
 } from "@expo-google-fonts/cormorant-infant";
 import { queryClient } from "../src/lib/query/client";
 import { SessionProvider } from "../src/features/auth";
+import { startQueueProcessor, setOnUploadComplete } from "../src/features/queue";
+import { useCurrentCoupleSpace } from "../src/features/couple-space";
+import { supabase } from "../src/lib/supabase/client";
 
 SplashScreen.preventAutoHideAsync();
+
+function QueueBoot() {
+  const { data } = useCurrentCoupleSpace();
+  const coupleSpaceId = data?.couple_spaces?.id;
+  useEffect(() => {
+    if (!coupleSpaceId) return;
+    supabase.auth.getUser().then(({ data: authData }) => {
+      const userId = authData.user?.id;
+      if (!userId) return;
+      setOnUploadComplete(() => queryClient.invalidateQueries({ queryKey: ["memories"] }));
+      startQueueProcessor(coupleSpaceId, userId);
+    });
+  }, [coupleSpaceId]);
+  return null;
+}
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -37,6 +55,7 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <SessionProvider>
+        <QueueBoot />
         <GestureHandlerRootView style={{ flex: 1 }}>
           <SafeAreaProvider>
             <StatusBar style="dark" />

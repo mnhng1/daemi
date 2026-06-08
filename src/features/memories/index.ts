@@ -6,4 +6,6 @@ export { useToggleReaction } from "./use-toggle-reaction";
 export { useDeleteMemory } from "./use-delete-memory";
 export { groupMemoriesByDate } from "./group-memories-by-date";
 export type { MemoryTypeFilter, TimelineDateSection, MemoryGroup, TimelineItem } from "./types";
-export { isMemoryGroup } from "./types";
+export { isMemoryGroup, isQueuedMemory } from "./types";
+export { useMemoriesWithQueue } from "./use-memories-with-queue";
+export type { MemoryOrQueued } from "./use-memories-with-queue";
