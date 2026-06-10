@@ -102,6 +102,8 @@ export type Database = {
           duration_seconds: number | null
           media_size_bytes: number | null
           media_mime: string | null
+          latitude: number | null
+          longitude: number | null
           deleted_at: string | null
           created_at: string
           updated_at: string
@@ -123,6 +125,8 @@ export type Database = {
           duration_seconds?: number | null
           media_size_bytes?: number | null
           media_mime?: string | null
+          latitude?: number | null
+          longitude?: number | null
           deleted_at?: string | null
           created_at?: string
           updated_at?: string
@@ -144,6 +148,8 @@ export type Database = {
           duration_seconds?: number | null
           media_size_bytes?: number | null
           media_mime?: string | null
+          latitude?: number | null
+          longitude?: number | null
           deleted_at?: string | null
           created_at?: string
           updated_at?: string
@@ -217,6 +223,10 @@ export type Database = {
     Views: Record<string, never>
     Functions: {
       list_space_tags: { Args: { space_id: string }; Returns: string[] }
+      list_space_places: {
+        Args: { space_id: string }
+        Returns: { place_name: string; memory_count: number }[]
+      }
       lookup_space_by_invite_code: {
         Args: { code: string }
         Returns: string
