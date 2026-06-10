@@ -18,4 +18,4 @@ Private shared scrapbook app for long-distance couples. Expo + React Native + Ty
 
 ## Current Phase
 
-Phase 0 (Foundation) — complete. Phase 1 (Database & Auth) — complete. Phase 2 (Auth Flow & Route Guards) — complete. Phase 3 (Timeline Day View) — complete. Phase 4 (Add Photo Memory + R2 Storage) — complete. Phase 5 (Letter Memories) — complete. Phase 6 (Memory Detail & Actions) — complete. Phase 7 (Search and Tags) — complete. Phase 8 (Realtime Sync) — complete. Phase 9 (Collections) — complete. Next: Phase 10 (Video and Ticket).
+Phase 0 (Foundation) — complete. Phase 1 (Database & Auth) — complete. Phase 2 (Auth Flow & Route Guards) — complete. Phase 3 (Timeline Day View) — complete. Phase 4 (Add Photo Memory + R2 Storage) — complete. Phase 5 (Letter Memories) — complete. Phase 6 (Memory Detail & Actions) — complete. Phase 7 (Search and Tags) — complete. Phase 8 (Realtime Sync) — complete. Phase 9 (Collections) — complete. Phase 10A (Video & Ticket baseline) — complete. Next: Phase 10B (heavy/unbounded video — gated behind a spike, see `docs/architecture/15-implementation-phases.md`).
