@@ -17,6 +17,8 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { colors } from "../../lib/theme/tokens";
 import { formatTimelineDate } from "../../lib/utils/date";
 import { TagInput, type TagInputHandle } from "./tag-input";
+import { LocationPicker } from "./location-picker";
+import type { ResolvedPlace } from "../../features/places";
 
 export type TicketSendPayload = {
   title: string;
@@ -25,15 +27,19 @@ export type TicketSendPayload = {
   mimeType?: string;
   dateHappened: string;
   tags: string[];
+  place_name: string | null;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 interface Props {
+  spaceId: string | undefined;
   isPending?: boolean;
   onSend: (payload: TicketSendPayload) => void;
   onCancel: () => void;
 }
 
-export function TicketComposer({ isPending, onSend, onCancel }: Props) {
+export function TicketComposer({ spaceId, isPending, onSend, onCancel }: Props) {
   const [title, setTitle] = useState("");
   const [seat, setSeat] = useState("");
   const [note, setNote] = useState("");
@@ -43,6 +49,7 @@ export function TicketComposer({ isPending, onSend, onCancel }: Props) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [image, setImage] = useState<{ uri: string; mimeType: string } | null>(null);
   const [tags, setTags] = useState<string[]>([]);
+  const [place, setPlace] = useState<ResolvedPlace | null>(null);
   const [titleError, setTitleError] = useState<string | null>(null);
   const tagInputRef = useRef<TagInputHandle>(null);
 
@@ -86,6 +93,9 @@ export function TicketComposer({ isPending, onSend, onCancel }: Props) {
       mimeType: image?.mimeType,
       dateHappened,
       tags: finalTags,
+      place_name: place?.place_name ?? null,
+      latitude: place?.latitude ?? null,
+      longitude: place?.longitude ?? null,
     });
   }
 
@@ -256,6 +266,15 @@ export function TicketComposer({ isPending, onSend, onCancel }: Props) {
                 value={tags}
                 onChange={setTags}
               />
+            </View>
+
+            {/* Place */}
+            <View style={styles.field}>
+              <Text style={styles.fieldLabel}>
+                Place{" "}
+                <Text style={styles.optional}>(optional)</Text>
+              </Text>
+              <LocationPicker spaceId={spaceId} value={place} onChange={setPlace} />
             </View>
           </View>
         </ScrollView>
