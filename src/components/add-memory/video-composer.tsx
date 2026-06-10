@@ -20,6 +20,8 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { colors } from "../../lib/theme/tokens";
 import { formatTimelineDate } from "../../lib/utils/date";
 import { TagInput, type TagInputHandle } from "./tag-input";
+import { LocationPicker } from "./location-picker";
+import type { ResolvedPlace } from "../../features/places";
 
 export type VideoSendPayload = {
   videoUri: string;
@@ -31,9 +33,13 @@ export type VideoSendPayload = {
   body?: string;
   dateHappened: string;
   tags: string[];
+  place_name: string | null;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 interface Props {
+  spaceId: string | undefined;
   isPending?: boolean;
   uploadProgress?: number | null;
   onSend: (payload: VideoSendPayload) => void;
@@ -48,6 +54,7 @@ function formatDuration(seconds: number): string {
 }
 
 export function VideoComposer({
+  spaceId,
   isPending,
   uploadProgress,
   onSend,
@@ -67,6 +74,7 @@ export function VideoComposer({
   );
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
+  const [place, setPlace] = useState<ResolvedPlace | null>(null);
   const [pickError, setPickError] = useState<string | null>(null);
   const tagInputRef = useRef<TagInputHandle>(null);
 
@@ -134,6 +142,9 @@ export function VideoComposer({
       body: body.trim() || undefined,
       dateHappened,
       tags: finalTags,
+      place_name: place?.place_name ?? null,
+      latitude: place?.latitude ?? null,
+      longitude: place?.longitude ?? null,
     });
   }
 
@@ -335,6 +346,15 @@ export function VideoComposer({
                 value={tags}
                 onChange={setTags}
               />
+            </View>
+
+            {/* Place */}
+            <View style={styles.field}>
+              <Text style={styles.fieldLabel}>
+                Place{" "}
+                <Text style={styles.optional}>(optional)</Text>
+              </Text>
+              <LocationPicker spaceId={spaceId} value={place} onChange={setPlace} />
             </View>
           </View>
         </ScrollView>

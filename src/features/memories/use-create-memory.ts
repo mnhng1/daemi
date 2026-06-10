@@ -14,6 +14,9 @@ type CreateMemoryBase = {
   title?: string;
   dateHappened: string;
   tags?: string[];
+  place_name?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 };
 
 type CreatePhotoInput = CreateMemoryBase & {
@@ -149,6 +152,9 @@ export function useCreateMemory() {
         date_happened: input.dateHappened,
         created_by_user_id: input.userId,
         tags: normalizeTags(input.tags),
+        place_name: input.place_name ?? null,
+        latitude: input.latitude ?? null,
+        longitude: input.longitude ?? null,
       };
 
       const { data, error } = await supabase
@@ -163,6 +169,8 @@ export function useCreateMemory() {
       queryClient.invalidateQueries({ queryKey: ["memories"] });
       queryClient.invalidateQueries({ queryKey: ["search"] });
       queryClient.invalidateQueries({ queryKey: ["space-tags"] });
+      queryClient.invalidateQueries({ queryKey: ["space-places"] });
+      queryClient.invalidateQueries({ queryKey: ["place-memories"] });
     },
   });
 

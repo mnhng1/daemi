@@ -28,6 +28,8 @@ import { LetterComposer } from "../../../src/components/add-memory/letter-compos
 import { VideoComposer, type VideoSendPayload } from "../../../src/components/add-memory/video-composer";
 import { TicketComposer, type TicketSendPayload } from "../../../src/components/add-memory/ticket-composer";
 import { TagInput, type TagInputHandle } from "../../../src/components/add-memory/tag-input";
+import { LocationPicker } from "../../../src/components/add-memory/location-picker";
+import type { ResolvedPlace } from "../../../src/features/places";
 
 const schema = z.object({
   title: z.string().optional(),
@@ -59,6 +61,7 @@ export default function Add() {
   const [letterBody, setLetterBody] = useState("");
   const [letterError, setLetterError] = useState<string | null>(null);
   const [tags, setTags] = useState<string[]>([]);
+  const [place, setPlace] = useState<ResolvedPlace | null>(null);
   const tagInputRef = useRef<TagInputHandle>(null);
 
   const { control, handleSubmit, reset, setValue, watch } = useForm<FormData>({
@@ -90,6 +93,7 @@ export default function Add() {
       setLetterBody("");
       setLetterError(null);
       setTags([]);
+      setPlace(null);
       createMemory.reset();
       setFocusKey((k) => k + 1);
       return () => {
@@ -119,6 +123,7 @@ export default function Add() {
     setLetterBody("");
     setLetterError(null);
     setTags([]);
+    setPlace(null);
     setSelectedType(null);
     router.replace("/(tabs)/timeline");
   }
@@ -148,6 +153,9 @@ export default function Add() {
           title: data.title || undefined,
           body: letterBody,
           dateHappened: data.dateHappened,
+          place_name: place?.place_name ?? null,
+          latitude: place?.latitude ?? null,
+          longitude: place?.longitude ?? null,
         },
         { onSuccess: resetForm, onError: () => setUploadProgress(null) }
       );
@@ -168,6 +176,9 @@ export default function Add() {
           body: data.body || undefined,
           dateHappened: data.dateHappened,
           tags: finalTags,
+          place_name: place?.place_name ?? null,
+          latitude: place?.latitude ?? null,
+          longitude: place?.longitude ?? null,
           onProgress: setUploadProgress,
         },
         { onSuccess: resetForm, onError: () => setUploadProgress(null) }
@@ -193,6 +204,9 @@ export default function Add() {
         userId: session.user.id,
         body,
         dateHappened: new Date().toISOString().slice(0, 10),
+        place_name: place?.place_name ?? null,
+        latitude: place?.latitude ?? null,
+        longitude: place?.longitude ?? null,
       },
       { onSuccess: resetForm }
     );
@@ -215,6 +229,9 @@ export default function Add() {
         body: payload.body,
         dateHappened: payload.dateHappened,
         tags: payload.tags,
+        place_name: payload.place_name,
+        latitude: payload.latitude,
+        longitude: payload.longitude,
         onProgress: setUploadProgress,
       },
       { onSuccess: resetForm, onError: () => setUploadProgress(null) }
@@ -235,6 +252,9 @@ export default function Add() {
         mimeType: payload.mimeType,
         dateHappened: payload.dateHappened,
         tags: payload.tags,
+        place_name: payload.place_name,
+        latitude: payload.latitude,
+        longitude: payload.longitude,
         onProgress: setUploadProgress,
       },
       { onSuccess: resetForm, onError: () => setUploadProgress(null) }
@@ -268,6 +288,7 @@ export default function Add() {
   if (selectedType === "video") {
     return (
       <VideoComposer
+        spaceId={spaceId}
         isPending={createMemory.isPending}
         uploadProgress={uploadProgress}
         onSend={handleVideoSend}
@@ -285,6 +306,7 @@ export default function Add() {
   if (selectedType === "ticket") {
     return (
       <TicketComposer
+        spaceId={spaceId}
         isPending={createMemory.isPending}
         onSend={handleTicketSend}
         onCancel={() => setSelectedType(null)}
@@ -386,6 +408,13 @@ export default function Add() {
                     onChange={setTags}
                     suggestions={spaceTags}
                   />
+                </View>
+
+                <View className="mb-4">
+                  <Text className="text-ink-2 text-sm mb-1.5 font-medium">
+                    Place <Text className="text-ink-3 font-normal">(optional)</Text>
+                  </Text>
+                  <LocationPicker spaceId={spaceId} value={place} onChange={setPlace} />
                 </View>
               </>
             )}
