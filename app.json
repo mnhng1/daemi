@@ -44,10 +44,7 @@
       ],
       "expo-splash-screen",
       "expo-video",
-      [
-        "react-native-maps",
-        {}
-      ]
+      "react-native-maps"
     ]
   }
 }
