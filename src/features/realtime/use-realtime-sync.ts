@@ -12,6 +12,7 @@ function invalidateMemoryQueries(queryClient: ReturnType<typeof useQueryClient>)
   // The places lens derives its counts/list from memories — refresh on sync.
   queryClient.invalidateQueries({ queryKey: ["space-places"] });
   queryClient.invalidateQueries({ queryKey: ["place-memories"] });
+  queryClient.invalidateQueries({ queryKey: ["space-coordinates"] });
 }
 
 export function useRealtimeSync(coupleSpaceId: string | undefined): void {
