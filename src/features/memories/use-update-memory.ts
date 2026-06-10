@@ -35,6 +35,7 @@ export function useUpdateMemory() {
       queryClient.invalidateQueries({ queryKey: ["space-tags"] });
       queryClient.invalidateQueries({ queryKey: ["space-places"] });
       queryClient.invalidateQueries({ queryKey: ["place-memories"] });
+      queryClient.invalidateQueries({ queryKey: ["space-coordinates"] });
     },
     onError: (error) => {
       logError("update-memory", error);

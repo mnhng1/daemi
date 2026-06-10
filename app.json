@@ -43,7 +43,13 @@
         }
       ],
       "expo-splash-screen",
-      "expo-video"
+      "expo-video",
+      [
+        "react-native-maps",
+        {
+          "androidGoogleMapsApiKey": "YOUR_ANDROID_MAPS_API_KEY"
+        }
+      ]
     ]
   }
 }

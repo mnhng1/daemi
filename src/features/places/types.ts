@@ -7,3 +7,10 @@ export type ResolvedPlace = {
   latitude: number | null;
   longitude: number | null;
 };
+
+export type SpaceCoordinate = {
+  id: string;
+  place_name: string | null;
+  latitude: number;
+  longitude: number;
+};

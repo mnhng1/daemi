@@ -171,6 +171,7 @@ export function useCreateMemory() {
       queryClient.invalidateQueries({ queryKey: ["space-tags"] });
       queryClient.invalidateQueries({ queryKey: ["space-places"] });
       queryClient.invalidateQueries({ queryKey: ["place-memories"] });
+      queryClient.invalidateQueries({ queryKey: ["space-coordinates"] });
     },
   });
 
