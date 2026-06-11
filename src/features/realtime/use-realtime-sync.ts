@@ -9,6 +9,10 @@ function invalidateMemoryQueries(queryClient: ReturnType<typeof useQueryClient>)
   queryClient.invalidateQueries({ queryKey: ["space-tags"] });
   // Collection cards derive cover/count from memories — refresh them too.
   queryClient.invalidateQueries({ queryKey: ["collections"] });
+  // The places lens derives its counts/list from memories — refresh on sync.
+  queryClient.invalidateQueries({ queryKey: ["space-places"] });
+  queryClient.invalidateQueries({ queryKey: ["place-memories"] });
+  queryClient.invalidateQueries({ queryKey: ["space-coordinates"] });
 }
 
 export function useRealtimeSync(coupleSpaceId: string | undefined): void {

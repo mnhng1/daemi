@@ -96,21 +96,34 @@ four-type experience for normal-sized media; 10B adds unbounded/heavy video.
 - Embedded playback via `expo-video` from presigned GET
 - Widen `MemoryTypeFilter` and the type-picker `onSelect` to all four types
 
-### Phase 10B — Heavy / unbounded video (merges Phase 12)
+### Phase 10B — Heavy / unbounded video (merges Phase 12) — implemented, pending ship
 
-- S3 multipart actions in `media-presign` (create/sign-part/complete/abort)
-- Resumable multipart upload client (part tracking, retry failed part)
-- Native background-upload module (requires an EAS dev build)
-- Durable Expo SQLite upload queue (survives restart) + retry
-- Queued / uploading cards on the timeline
-- **Spike first:** resumable S3-multipart inside a background native task on RN
-  is the main risk (R2 is S3-multipart, not TUS; off-the-shelf libs don't
-  orchestrate per-part background uploads). De-risk before full build.
+Built on top of Phase 11. Status: code-complete on `main`; pending ship items below.
 
-## Phase 11 — Places Lens
+- S3 multipart actions in `media-presign` (create/sign-part/complete/abort) ✅
+- Resumable multipart upload client (part tracking, retry failed part) ✅ `src/features/media/upload-multipart.ts`
+- Durable Expo SQLite upload queue (survives restart) + retry ✅ `src/features/queue/`
+- Queued / uploading cards on the timeline ✅ `queued-memory-card.tsx`
+- Places integration: the queue carries `place_name`/`latitude`/`longitude`, so a
+  location picked on a heavy video is persisted by the queue processor on the
+  deferred memory insert (not just the synchronous Phase 11 path).
+- **Pending ship:** native background-upload task (requires an EAS dev build),
+  R2 `AbortIncompleteMultipartUpload` lifecycle rule, on-device verification.
+- Original risk (resumable S3-multipart in a background native task; R2 is
+  S3-multipart, not TUS) was de-risked during the build.
 
-- Derived place list
-- Place-filtered results
+## Phase 11 — Places Lens + coordinates — complete
+
+- Google Places (New) autocomplete picker via the `places-search` edge function
+- `LocationPicker` wired into the photo / video / ticket composers + memory edit
+- Lat/lng captured on create/edit; `latitude`/`longitude` columns on `memories`
+- Derived `/places` lens via `list_space_places(space_id)` RPC (name + count)
+- Per-place detail route `app/places/[name].tsx`
+
+### Phase 11B — Places map — code-complete, pending dev-build verification
+
+- `react-native-maps` map with list/map toggle (`places-map.tsx`); Apple Maps on
+  iOS needs no API key. iOS only — Android not targeted.
 
 ## Phase 12 — Offline Queue
 
