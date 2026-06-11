@@ -18,6 +18,8 @@ import { useCurrentUser } from "../../../src/features/auth";
 import { usePartner } from "../../../src/features/couple-space";
 import { LetterComposer } from "../../../src/components/add-memory/letter-composer";
 import { TagInput, type TagInputHandle } from "../../../src/components/add-memory/tag-input";
+import { LocationPicker } from "../../../src/components/add-memory/location-picker";
+import type { ResolvedPlace } from "../../../src/features/places";
 import { formatTimelineDate } from "../../../src/lib/utils/date";
 import { colors } from "../../../src/lib/theme/tokens";
 
@@ -33,7 +35,7 @@ export default function EditMemory() {
   const [title, setTitle] = useState<string>("");
   const [body, setBody] = useState<string>("");
   const [dateHappened, setDateHappened] = useState<string>("");
-  const [placeName, setPlaceName] = useState<string>("");
+  const [place, setPlace] = useState<ResolvedPlace | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const tagInputRef = useRef<TagInputHandle>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -44,7 +46,15 @@ export default function EditMemory() {
     setTitle(memory.title ?? "");
     setBody(memory.body ?? "");
     setDateHappened(memory.date_happened);
-    setPlaceName(memory.place_name ?? "");
+    setPlace(
+      memory.place_name
+        ? {
+            place_name: memory.place_name,
+            latitude: memory.latitude,
+            longitude: memory.longitude,
+          }
+        : null
+    );
     setTags(memory.tags ?? []);
     setInitialized(true);
   }
@@ -116,7 +126,9 @@ export default function EditMemory() {
         title: title.trim() || null,
         body: body.trim() || null,
         date_happened: dateHappened,
-        place_name: placeName.trim() || null,
+        place_name: place?.place_name ?? null,
+        latitude: place?.latitude ?? null,
+        longitude: place?.longitude ?? null,
         tags: finalTags,
       },
       { onSuccess: () => router.back() }
@@ -187,19 +199,10 @@ export default function EditMemory() {
 
             <View style={{ marginBottom: 16 }}>
               <Text style={{ color: colors.ink2, fontSize: 14, marginBottom: 6, fontWeight: "500" }}>Place</Text>
-              <TextInput
-                style={{
-                  backgroundColor: colors.shade,
-                  borderRadius: 12,
-                  paddingHorizontal: 16,
-                  paddingVertical: 14,
-                  color: colors.ink,
-                  fontSize: 16,
-                }}
-                placeholder="Where was this?"
-                placeholderTextColor={colors.ink3}
-                value={placeName}
-                onChangeText={setPlaceName}
+              <LocationPicker
+                spaceId={memory.couple_space_id}
+                value={place}
+                onChange={setPlace}
               />
             </View>
 

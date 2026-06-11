@@ -9,6 +9,8 @@ type UpdateMemoryInput = {
   body?: string | null;
   date_happened?: string;
   place_name?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   tags?: string[];
 };
 
@@ -31,6 +33,9 @@ export function useUpdateMemory() {
       queryClient.invalidateQueries({ queryKey: ["memories"] });
       queryClient.invalidateQueries({ queryKey: ["search"] });
       queryClient.invalidateQueries({ queryKey: ["space-tags"] });
+      queryClient.invalidateQueries({ queryKey: ["space-places"] });
+      queryClient.invalidateQueries({ queryKey: ["place-memories"] });
+      queryClient.invalidateQueries({ queryKey: ["space-coordinates"] });
     },
     onError: (error) => {
       logError("update-memory", error);

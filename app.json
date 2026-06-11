@@ -43,7 +43,17 @@
         }
       ],
       "expo-splash-screen",
-      "expo-video"
+      "expo-video",
+      "react-native-maps",
+      "expo-sqlite",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "backgroundModes": ["fetch", "processing"]
+          }
+        }
+      ]
     ]
   }
 }

@@ -52,6 +52,17 @@ function jsonResponse(body: unknown, status = 200): Response {
   });
 }
 
+function validateMultipartKey(
+  k: string | undefined,
+  coupleSpaceId: string,
+): Response | null {
+  if (!k) return jsonResponse({ error: "key is required" }, 400);
+  if (!k.startsWith(`couple-spaces/${coupleSpaceId}/`)) {
+    return jsonResponse({ error: "Invalid key for this couple space" }, 403);
+  }
+  return null;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: CORS_HEADERS });
@@ -81,6 +92,9 @@ Deno.serve(async (req: Request) => {
     key?: string;
     variant?: "original" | "thumb";
     expires?: number;
+    uploadId?: string;
+    partNumber?: number;
+    parts?: Array<{ partNumber: number; etag: string }>;
   };
   try {
     body = await req.json();
@@ -90,8 +104,22 @@ Deno.serve(async (req: Request) => {
 
   const { action, coupleSpaceId, memoryId, mimeType } = body;
 
-  if (action !== "upload" && action !== "download") {
-    return jsonResponse({ error: "Invalid action. Must be 'upload' or 'download'" }, 400);
+  const VALID_ACTIONS = new Set([
+    "upload",
+    "download",
+    "create-multipart",
+    "sign-part",
+    "complete-multipart",
+    "abort-multipart",
+  ]);
+  if (!VALID_ACTIONS.has(action)) {
+    return jsonResponse(
+      {
+        error:
+          "Invalid action. Must be one of: upload, download, create-multipart, sign-part, complete-multipart, abort-multipart",
+      },
+      400,
+    );
   }
 
   if (!UUID_RE.test(coupleSpaceId) || !UUID_RE.test(memoryId)) {
@@ -108,6 +136,8 @@ Deno.serve(async (req: Request) => {
   if (memberError || !membership) {
     return jsonResponse({ error: "Not a member of this couple space" }, 403);
   }
+
+  // ── upload ─────────────────────────────────────────────────────────────────
 
   if (action === "upload") {
     const variant = body.variant ?? "original";
@@ -137,32 +167,151 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ url, key });
   }
 
-  if (!body.key) {
-    return jsonResponse({ error: "key is required for download" }, 400);
+  // ── download ───────────────────────────────────────────────────────────────
+
+  if (action === "download") {
+    if (!body.key) {
+      return jsonResponse({ error: "key is required for download" }, 400);
+    }
+
+    if (!body.key.startsWith(`couple-spaces/${coupleSpaceId}/`)) {
+      return jsonResponse({ error: "Invalid key for this couple space" }, 403);
+    }
+
+    const { data: memory } = await supabase
+      .from("memories")
+      .select("id")
+      .eq("id", memoryId)
+      .eq("couple_space_id", coupleSpaceId)
+      .maybeSingle();
+
+    if (!memory) {
+      return jsonResponse({ error: "Memory not found in this couple space" }, 404);
+    }
+
+    const requestedExpires = typeof body.expires === "number" ? body.expires : 3600;
+    const clampedExpires = Math.min(requestedExpires, 43200);
+
+    const url = (await r2.sign(
+      new Request(`${R2_URL}/${BUCKET}/${body.key}?X-Amz-Expires=${clampedExpires}`),
+      { aws: { signQuery: true } },
+    )).url.toString();
+
+    return jsonResponse({ url });
   }
 
-  if (!body.key.startsWith(`couple-spaces/${coupleSpaceId}/`)) {
-    return jsonResponse({ error: "Invalid key for this couple space" }, 403);
+  // ── create-multipart ───────────────────────────────────────────────────────
+
+  if (action === "create-multipart") {
+    // The edge function generates the key — caller must NOT supply one.
+    // This keeps the R2 path canonical and prevents path-injection attacks.
+    if (!mimeType || !ALLOWED_MIME_TYPES.has(mimeType)) {
+      return jsonResponse({ error: "Unsupported or missing mimeType" }, 400);
+    }
+    const ext = MIME_TO_EXT[mimeType];
+    const key = `couple-spaces/${coupleSpaceId}/memories/${memoryId}/original.${ext}`;
+
+    const initReq = await r2.sign(
+      new Request(`${R2_URL}/${BUCKET}/${key}?uploads`, { method: "POST" }),
+    );
+    const initRes = await fetch(initReq);
+    if (!initRes.ok) {
+      const text = await initRes.text();
+      return jsonResponse({ error: "Failed to initiate multipart upload", detail: text }, 502);
+    }
+    const xml = await initRes.text();
+    const match = xml.match(/<UploadId>([^<]+)<\/UploadId>/);
+    if (!match) {
+      return jsonResponse({ error: "Could not parse UploadId from R2 response" }, 502);
+    }
+    return jsonResponse({ uploadId: match[1], key });
   }
 
-  const { data: memory } = await supabase
-    .from("memories")
-    .select("id")
-    .eq("id", memoryId)
-    .eq("couple_space_id", coupleSpaceId)
-    .maybeSingle();
+  // ── sign-part ──────────────────────────────────────────────────────────────
 
-  if (!memory) {
-    return jsonResponse({ error: "Memory not found in this couple space" }, 404);
+  if (action === "sign-part") {
+    const keyErr = validateMultipartKey(body.key, coupleSpaceId);
+    if (keyErr) return keyErr;
+    if (!body.uploadId) return jsonResponse({ error: "uploadId is required" }, 400);
+    if (
+      body.partNumber === undefined ||
+      !Number.isInteger(body.partNumber) ||
+      body.partNumber < 1 ||
+      body.partNumber > 10000
+    ) {
+      return jsonResponse({ error: "partNumber must be an integer between 1 and 10000" }, 400);
+    }
+
+    const key = body.key!;
+    const qs =
+      `partNumber=${body.partNumber}&uploadId=${encodeURIComponent(body.uploadId)}&X-Amz-Expires=900`;
+    const signed = await r2.sign(
+      new Request(`${R2_URL}/${BUCKET}/${key}?${qs}`, { method: "PUT" }),
+      { aws: { signQuery: true } },
+    );
+    return jsonResponse({ url: signed.url.toString() });
   }
 
-  const requestedExpires = typeof body.expires === "number" ? body.expires : 3600;
-  const clampedExpires = Math.min(requestedExpires, 43200);
+  // ── complete-multipart ─────────────────────────────────────────────────────
 
-  const url = (await r2.sign(
-    new Request(`${R2_URL}/${BUCKET}/${body.key}?X-Amz-Expires=${clampedExpires}`),
-    { aws: { signQuery: true } },
-  )).url.toString();
+  if (action === "complete-multipart") {
+    const keyErr = validateMultipartKey(body.key, coupleSpaceId);
+    if (keyErr) return keyErr;
+    if (!body.uploadId) return jsonResponse({ error: "uploadId is required" }, 400);
+    if (!Array.isArray(body.parts) || body.parts.length === 0) {
+      return jsonResponse({ error: "parts array is required and must not be empty" }, 400);
+    }
 
-  return jsonResponse({ url });
+    const key = body.key!;
+    const sorted = [...body.parts].sort((a, b) => a.partNumber - b.partNumber);
+    const partsXml = sorted
+      .map(
+        (p) =>
+          `<Part><PartNumber>${p.partNumber}</PartNumber><ETag>${p.etag}</ETag></Part>`,
+      )
+      .join("");
+    const xmlBody = `<CompleteMultipartUpload>${partsXml}</CompleteMultipartUpload>`;
+
+    const completeReq = await r2.sign(
+      new Request(
+        `${R2_URL}/${BUCKET}/${key}?uploadId=${encodeURIComponent(body.uploadId)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/xml" },
+          body: xmlBody,
+        },
+      ),
+    );
+    const completeRes = await fetch(completeReq);
+    if (!completeRes.ok) {
+      const text = await completeRes.text();
+      return jsonResponse({ error: "Failed to complete multipart upload", detail: text }, 502);
+    }
+    return jsonResponse({ key });
+  }
+
+  // ── abort-multipart ────────────────────────────────────────────────────────
+
+  if (action === "abort-multipart") {
+    const keyErr = validateMultipartKey(body.key, coupleSpaceId);
+    if (keyErr) return keyErr;
+    if (!body.uploadId) return jsonResponse({ error: "uploadId is required" }, 400);
+
+    const key = body.key!;
+    const abortReq = await r2.sign(
+      new Request(
+        `${R2_URL}/${BUCKET}/${key}?uploadId=${encodeURIComponent(body.uploadId)}`,
+        { method: "DELETE" },
+      ),
+    );
+    const abortRes = await fetch(abortReq);
+    if (!abortRes.ok) {
+      const text = await abortRes.text();
+      return jsonResponse({ error: "Failed to abort multipart upload", detail: text }, 502);
+    }
+    return jsonResponse({ ok: true });
+  }
+
+  // Should never reach here given VALID_ACTIONS guard above
+  return jsonResponse({ error: "Unhandled action" }, 500);
 });
