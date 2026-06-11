@@ -59,14 +59,21 @@ Later:
 
 ## Places Browse
 
-Derived from memories:
+Derived from memories — no `places` table. Exposed as the `list_space_places(space_id)`
+RPC (security definer + member guard + soft-delete filter), consumed by the `/places`
+lens via `useSpacePlaces`:
 
 ```sql
 select place_name, count(*)
 from memories
 where couple_space_id = ?
-and place_name is not null
+  and deleted_at is null
+  and place_name is not null and place_name <> ''
 group by place_name
+order by count(*) desc, place_name asc
 ```
 
-No `places` table in MVP.
+Coordinates: `memories.latitude` / `memories.longitude` are captured by the Google
+Places picker (Phase 11) and drive the Places map (Phase 11B). Null for free-text /
+legacy `place_name`. A location picked on a heavy video is carried through the upload
+queue so it survives the deferred insert (see Phase 10B).
