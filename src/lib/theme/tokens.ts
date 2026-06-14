@@ -1,3 +1,5 @@
+import type { ViewStyle } from "react-native";
+
 export const colors = {
   ink: "#2a2520",
   ink2: "#5a4f44",
@@ -12,4 +14,14 @@ export const colors = {
   accent: "#8c5a7c",
   accentSoft: "#ead4df",
   highlight: "#f5e6b0",
+  line: "rgba(44,38,32,0.13)",
+  accentText: "#74506a",
 } as const;
+
+export const cardShadow: ViewStyle = {
+  shadowColor: "#46301c",
+  shadowOffset: { width: 0, height: 5 },
+  shadowOpacity: 0.2,
+  shadowRadius: 8,
+  elevation: 3,
+};
