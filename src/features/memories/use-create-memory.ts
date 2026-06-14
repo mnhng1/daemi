@@ -73,7 +73,15 @@ function isNetworkError(err: unknown): boolean {
     msg.includes("status 0") ||
     msg.includes("network error") ||
     msg.includes("request timed out") ||
-    msg.includes("Network request failed")
+    msg.includes("Network request failed") ||
+    // supabase-js throws a FunctionsFetchError ("Failed to send a request to
+    // the Edge Function") when the media-presign invoke can't reach the network.
+    // That call runs BEFORE the upload XHR, so it's the real surface when the
+    // connection drops between the up-front getIsOnline() check and the presign
+    // request — must be treated as network-class so the memory is enqueued, not
+    // lost (audit #3).
+    msg.includes("Failed to send a request to the Edge Function") ||
+    err.name === "FunctionsFetchError"
   );
 }
 
@@ -149,9 +157,14 @@ async function enqueueDraft(
   refreshQueue();
   // Only trigger a drain if we're actually online — no point starting a cycle
   // that will immediately fail and burn retry counts.
-  getIsOnline().then((isOnline) => {
-    if (isOnline) triggerDrain();
-  });
+  getIsOnline()
+    .then((isOnline) => {
+      if (isOnline) triggerDrain();
+    })
+    .catch(() => {
+      // NetInfo.fetch() failed — leave the row queued; it drains on the next
+      // launch / AppState-active / came-online trigger.
+    });
 
   return { id: memoryId, type: input.type, _queued: true };
 }
@@ -213,7 +226,14 @@ export function useCreateMemory() {
               mimeType: 'image/jpeg',
               variant: 'thumb',
             });
-            const { key: uploadedThumbnailKey } = await posterHandle.result;
+            abortRef.current = posterHandle.abort;
+            let uploadedThumbnailKey: string;
+            try {
+              const { key } = await posterHandle.result;
+              uploadedThumbnailKey = key;
+            } finally {
+              abortRef.current = null;
+            }
             return enqueueDraft(input, memoryId, uploadedThumbnailKey);
           }
 

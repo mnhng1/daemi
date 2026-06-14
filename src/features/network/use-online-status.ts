@@ -5,7 +5,7 @@ import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
 // Helpers
 // ---------------------------------------------------------------------------
 
-function isOnlineFromState(state: NetInfoState): boolean {
+export function isOnlineFromState(state: NetInfoState): boolean {
   return state.isConnected === true && state.isInternetReachable !== false;
 }
 
