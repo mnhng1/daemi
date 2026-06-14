@@ -7,6 +7,7 @@ import {
   Image,
   KeyboardAvoidingView,
   ScrollView,
+  StyleSheet,
   Platform,
 } from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
@@ -22,7 +23,7 @@ import { useCreateMemory } from "../../../src/features/memories";
 import { useSpaceTags } from "../../../src/features/search";
 import { formatTimelineDate } from "../../../src/lib/utils/date";
 import { wordCount } from "../../../src/lib/utils/text";
-import { colors } from "../../../src/lib/theme/tokens";
+import { colors, fonts } from "../../../src/lib/theme/tokens";
 import { MemoryTypePicker } from "../../../src/components/add-memory/memory-type-picker";
 import { LetterComposer } from "../../../src/components/add-memory/letter-composer";
 import { VideoComposer, type VideoSendPayload } from "../../../src/components/add-memory/video-composer";
@@ -314,161 +315,234 @@ export default function Add() {
     );
   }
 
+  const saveLabel = createMemory.isPending
+    ? uploadProgress !== null && uploadProgress < 100
+      ? `${uploadProgress}%`
+      : "saving…"
+    : "save";
+
   return (
-    <SafeAreaView className="flex-1 bg-paper" edges={["top"]}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.paper }} edges={["top"]}>
       <KeyboardAvoidingView
-        className="flex-1"
+        style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
+        {/* Composer chrome — cancel · title · save (docs/prototype/src/05-add-composer.js) */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => setSelectedType(null)} hitSlop={8}>
+            <Text style={styles.cancelText}>cancel</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>new photo</Text>
+          <TouchableOpacity
+            onPress={handleSubmit(onSubmit)}
+            disabled={createMemory.isPending}
+            hitSlop={8}
+          >
+            <Text style={[styles.saveText, createMemory.isPending && { opacity: 0.5 }]}>
+              {saveLabel}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
+          contentContainerStyle={styles.body}
           keyboardShouldPersistTaps="handled"
         >
-          <View className="px-6 py-6">
-            <View className="flex-row items-center mb-6">
-              <TouchableOpacity
-                onPress={() => setSelectedType(null)}
-                style={{ marginRight: 12 }}
-              >
-                <Text style={{ fontSize: 22, color: colors.ink }}>←</Text>
-              </TouchableOpacity>
-              <Text className="text-ink font-bold text-xl">New Photo</Text>
-            </View>
-
-            {selectedType === "photo" && (
-              <>
-                <TouchableOpacity onPress={pickImage} className="mb-4">
-                  {image ? (
-                    <Image
-                      source={{ uri: image.uri }}
-                      className="w-full h-64 rounded-xl"
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <View className="w-full h-64 rounded-xl border-2 border-dashed border-ink-4 items-center justify-center">
-                      <Text className="text-ink-3 text-base">Tap to choose a photo</Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-                {imageError && (
-                  <Text className="text-red-500 text-xs mb-2">{imageError}</Text>
-                )}
-
-                <View className="mb-4">
-                  <Text className="text-ink-2 text-sm mb-1.5 font-medium">
-                    Caption <Text className="text-ink-3 font-normal">(optional)</Text>
-                  </Text>
-                  <Controller
-                    control={control}
-                    name="title"
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <TextInput
-                        className="bg-shade rounded-xl px-4 py-3.5 text-ink text-base"
-                        placeholder="A short caption"
-                        placeholderTextColor={colors.ink3}
-                        onBlur={onBlur}
-                        onChangeText={onChange}
-                        value={value}
-                      />
-                    )}
-                  />
-                </View>
-
-                <View className="mb-4">
-                  <Text className="text-ink-2 text-sm mb-1.5 font-medium">
-                    Note <Text className="text-ink-3 font-normal">(optional)</Text>
-                  </Text>
-                  <Controller
-                    control={control}
-                    name="body"
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <TextInput
-                        className="bg-shade rounded-xl px-4 py-3.5 text-ink text-base"
-                        placeholder="Tell the story behind this memory..."
-                        placeholderTextColor={colors.ink3}
-                        multiline
-                        numberOfLines={4}
-                        textAlignVertical="top"
-                        style={{ minHeight: 100 }}
-                        onBlur={onBlur}
-                        onChangeText={onChange}
-                        value={value}
-                      />
-                    )}
-                  />
-                </View>
-
-                <View className="mb-4">
-                  <Text className="text-ink-2 text-sm mb-1.5 font-medium">
-                    Tags <Text className="text-ink-3 font-normal">(optional)</Text>
-                  </Text>
-                  <TagInput
-                    ref={tagInputRef}
-                    value={tags}
-                    onChange={setTags}
-                    suggestions={spaceTags}
-                  />
-                </View>
-
-                <View className="mb-4">
-                  <Text className="text-ink-2 text-sm mb-1.5 font-medium">
-                    Place <Text className="text-ink-3 font-normal">(optional)</Text>
-                  </Text>
-                  <LocationPicker spaceId={spaceId} value={place} onChange={setPlace} />
-                </View>
-              </>
+          <TouchableOpacity onPress={pickImage}>
+            {image ? (
+              <Image source={{ uri: image.uri }} style={styles.media} resizeMode="cover" />
+            ) : (
+              <View style={styles.mediaEmpty}>
+                <Text style={styles.mediaEmptyText}>tap to choose a photo</Text>
+              </View>
             )}
+          </TouchableOpacity>
+          {imageError && <Text style={styles.errorText}>{imageError}</Text>}
 
-            <View className="mb-6">
-              <Text className="text-ink-2 text-sm mb-1.5 font-medium">Date</Text>
-              <TouchableOpacity
-                className="bg-shade rounded-xl px-4 py-3.5"
-                onPress={() => setShowDatePicker(true)}
-              >
-                <Text className="text-ink text-base">
-                  {formatTimelineDate(dateHappened)}
-                </Text>
-              </TouchableOpacity>
-              {showDatePicker && (
-                <DateTimePicker
-                  value={new Date(dateHappened + "T00:00:00")}
-                  mode="date"
-                  display="spinner"
-                  maximumDate={new Date()}
-                  onChange={(_, selectedDate) => {
-                    setShowDatePicker(Platform.OS === "ios");
-                    if (selectedDate) {
-                      setValue("dateHappened", selectedDate.toISOString().slice(0, 10));
-                    }
-                  }}
+          <View>
+            <FieldLabel label="caption" />
+            <Controller
+              control={control}
+              name="title"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput
+                  style={[styles.fieldBox, styles.captionInput]}
+                  placeholder="say something"
+                  placeholderTextColor={colors.ink3}
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
                 />
               )}
-            </View>
+            />
+          </View>
 
-            <TouchableOpacity
-              className={`bg-accent rounded-xl py-3.5 items-center ${createMemory.isPending ? "opacity-50" : ""}`}
-              onPress={handleSubmit(onSubmit)}
-              disabled={createMemory.isPending}
-            >
-              {createMemory.isPending ? (
-                <Text className="text-white font-semibold text-base">
-                  {uploadProgress !== null && uploadProgress < 100
-                    ? `Uploading... ${uploadProgress}%`
-                    : "Saving..."}
-                </Text>
-              ) : (
-                <Text className="text-white font-semibold text-base">Save Memory</Text>
+          <View>
+            <FieldLabel label="note" optional />
+            <Controller
+              control={control}
+              name="body"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput
+                  style={[styles.fieldBox, styles.noteInput]}
+                  placeholder="tell the story behind this memory…"
+                  placeholderTextColor={colors.ink3}
+                  multiline
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                />
               )}
-            </TouchableOpacity>
+            />
+          </View>
 
-            {createMemory.isError && (
-              <Text className="text-red-500 text-sm text-center mt-3">
-                {createMemory.error?.message ?? "Something went wrong"}
-              </Text>
+          <View>
+            <FieldLabel label="when" />
+            <TouchableOpacity style={styles.fieldBox} onPress={() => setShowDatePicker(true)}>
+              <Text style={styles.fieldValue}>{formatTimelineDate(dateHappened)}</Text>
+            </TouchableOpacity>
+            {showDatePicker && (
+              <DateTimePicker
+                value={new Date(dateHappened + "T00:00:00")}
+                mode="date"
+                display="spinner"
+                maximumDate={new Date()}
+                onChange={(_, selectedDate) => {
+                  setShowDatePicker(Platform.OS === "ios");
+                  if (selectedDate) {
+                    setValue("dateHappened", selectedDate.toISOString().slice(0, 10));
+                  }
+                }}
+              />
             )}
           </View>
+
+          <View>
+            <FieldLabel label="place" optional />
+            <LocationPicker spaceId={spaceId} value={place} onChange={setPlace} />
+          </View>
+
+          <View>
+            <FieldLabel label="tags" optional />
+            <TagInput
+              ref={tagInputRef}
+              value={tags}
+              onChange={setTags}
+              suggestions={spaceTags}
+            />
+          </View>
+
+          {createMemory.isError && (
+            <Text style={[styles.errorText, { textAlign: "center" }]}>
+              {createMemory.error?.message ?? "Something went wrong"}
+            </Text>
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
+
+function FieldLabel({ label, optional }: { label: string; optional?: boolean }) {
+  return (
+    <Text style={styles.fieldLabel}>
+      {label}
+      {optional ? <Text style={styles.fieldOptional}>  optional</Text> : null}
+    </Text>
+  );
+}
+
+const styles = StyleSheet.create({
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.line,
+  },
+  cancelText: {
+    fontFamily: fonts.ui,
+    fontSize: 15,
+    color: colors.ink2,
+  },
+  headerTitle: {
+    fontFamily: fonts.display,
+    fontSize: 23,
+    color: colors.ink,
+  },
+  saveText: {
+    fontFamily: fonts.ui,
+    fontSize: 15,
+    color: colors.accent,
+  },
+  body: {
+    padding: 16,
+    paddingBottom: 32,
+    gap: 12,
+  },
+  media: {
+    width: "100%",
+    height: 168,
+    borderRadius: 14,
+  },
+  mediaEmpty: {
+    width: "100%",
+    height: 168,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderStyle: "dashed",
+    borderColor: colors.ink4,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  mediaEmptyText: {
+    fontFamily: fonts.ui,
+    fontSize: 14,
+    color: colors.ink3,
+  },
+  fieldLabel: {
+    fontFamily: fonts.ui,
+    fontSize: 13,
+    color: colors.ink2,
+    marginBottom: 5,
+  },
+  fieldOptional: {
+    fontFamily: fonts.ui,
+    fontSize: 13,
+    color: colors.ink3,
+  },
+  fieldBox: {
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+  },
+  fieldValue: {
+    fontFamily: fonts.ui,
+    fontSize: 15,
+    color: colors.ink,
+  },
+  captionInput: {
+    fontFamily: fonts.displayRegular,
+    fontSize: 19,
+    color: colors.ink,
+  },
+  noteInput: {
+    fontFamily: fonts.ui,
+    fontSize: 15,
+    color: colors.ink,
+    minHeight: 92,
+  },
+  errorText: {
+    fontFamily: fonts.ui,
+    fontSize: 12,
+    color: colors.destructive,
+  },
+});

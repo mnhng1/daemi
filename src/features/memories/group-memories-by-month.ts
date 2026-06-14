@@ -38,6 +38,62 @@ export function groupByMonth(
   });
 }
 
+export interface MonthScaffoldRow {
+  monthKey: string;
+  year: number;
+  month: number; // 0-indexed
+  items: MemoryWithAuthor[]; // empty for months with no memories
+  isEmpty: boolean;
+  isCurrentMonth: boolean;
+}
+
+/**
+ * Builds a continuous month-by-month scaffold for the year view: every month
+ * from the current month (top) down to January of the earliest year that has
+ * data (bottom). Months with no memories come back with `isEmpty: true` so the
+ * UI can render them as faint placeholders — this keeps the year view feeling
+ * like a *year* (and not cramped to the top) when data is sparse.
+ *
+ * `now` is injected so the function stays pure/testable.
+ */
+export function scaffoldMonths(
+  memories: MemoryWithAuthor[],
+  now: Date
+): MonthScaffoldRow[] {
+  const groups = groupByMonth(memories);
+  if (groups.length === 0) return [];
+
+  // Key items by an absolute month index (year*12 + 0-indexed month) to avoid
+  // any string-format coupling with monthKey().
+  const byVal: Record<number, MemoryWithAuthor[]> = {};
+  for (const g of groups) byVal[g.year * 12 + g.month] = g.items;
+
+  const curVal = now.getFullYear() * 12 + now.getMonth();
+  const newest = groups[0]; // groupByMonth is most-recent-first
+  const oldest = groups[groups.length - 1];
+
+  // Top = whichever is later: this month, or the newest memory's month.
+  const topVal = Math.max(curVal, newest.year * 12 + newest.month);
+  // Bottom = January of the earliest year that has data.
+  const bottomVal = oldest.year * 12 + 0;
+
+  const rows: MonthScaffoldRow[] = [];
+  for (let v = topVal; v >= bottomVal; v--) {
+    const year = Math.floor(v / 12);
+    const month = v % 12;
+    const items = byVal[v] ?? [];
+    rows.push({
+      monthKey: `${year}-${month}`,
+      year,
+      month,
+      items,
+      isEmpty: items.length === 0,
+      isCurrentMonth: v === curVal,
+    });
+  }
+  return rows;
+}
+
 /**
  * Groups items within a single month by week-of-month, sorted descending.
  * Week = ceil(dayOfMonth / 7), matching prototype line 201.

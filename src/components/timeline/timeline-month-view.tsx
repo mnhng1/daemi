@@ -7,8 +7,9 @@ import {
   monthTripMarker,
 } from "../../features/memories";
 import { formatMonthLabel } from "../../lib/utils/date";
-import { colors } from "../../lib/theme/tokens";
-import { TimelineSpine } from "./timeline-spine";
+import { colors, fonts } from "../../lib/theme/tokens";
+import { TimelineNode } from "./timeline-node";
+import { TimelineMonthMarker } from "./timeline-month-marker";
 import { TimelineMiniThumb } from "./timeline-mini-thumb";
 
 interface Props {
@@ -62,68 +63,7 @@ export function TimelineMonthView({ memories, anniversaryMonth }: Props) {
         const isAccent = section.marker === "anniversary";
         const label = formatMonthLabel(section.year, section.month);
         const sub = `${section.totalCount} ${section.totalCount === 1 ? "memory" : "memories"}${section.marker === "anniversary" ? " · anniversary" : ""}`;
-
-        return (
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              marginTop: 4,
-              marginBottom: 14,
-            }}
-          >
-            {/* Diamond marker (prototype TLMarker, line 48-50) */}
-            <View style={{ width: 46, flexShrink: 0 }} />
-            <View style={{ width: 20, flexShrink: 0, alignItems: "center" }}>
-              <View
-                style={{
-                  width: 15,
-                  height: 15,
-                  transform: [{ rotate: "45deg" }],
-                  borderRadius: 3,
-                  backgroundColor: isAccent ? colors.accent : colors.accentSoft,
-                  borderWidth: 2,
-                  borderColor: colors.paper,
-                  shadowColor: colors.accent,
-                  shadowOffset: { width: 0, height: 0 },
-                  shadowOpacity: 1,
-                  shadowRadius: 1.5,
-                  elevation: 1,
-                }}
-              />
-            </View>
-            {/* Label block with left accent border */}
-            <View
-              style={{
-                flex: 1,
-                marginLeft: 12,
-                paddingLeft: 12,
-                borderLeftWidth: 2.5,
-                borderLeftColor: isAccent ? colors.accent : colors.accentSoft,
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: 19,
-                  fontWeight: "700",
-                  color: isAccent ? colors.accentText : colors.ink,
-                  lineHeight: 20,
-                }}
-              >
-                {label}
-              </Text>
-              <Text
-                style={{
-                  fontSize: 11,
-                  color: isAccent ? colors.accentText : colors.ink2,
-                  marginTop: 2,
-                }}
-              >
-                {sub}
-              </Text>
-            </View>
-          </View>
-        );
+        return <TimelineMonthMarker label={label} sub={sub} accent={isAccent} />;
       }}
       renderItem={({ item }) => (
         <View
@@ -137,6 +77,7 @@ export function TimelineMonthView({ memories, anniversaryMonth }: Props) {
           <View style={{ width: 46, flexShrink: 0, alignItems: "flex-end", paddingRight: 8, paddingTop: 4 }}>
             <Text
               style={{
+                fontFamily: fonts.ui,
                 fontSize: 10,
                 color: colors.ink3,
                 fontWeight: "600",
@@ -147,8 +88,8 @@ export function TimelineMonthView({ memories, anniversaryMonth }: Props) {
           </View>
 
           {/* Small spine node */}
-          <View style={{ paddingTop: 6 }}>
-            <TimelineSpine size="sm" showTop={false} showBottom={false} />
+          <View style={{ width: 20, alignItems: "center", paddingTop: 6 }}>
+            <TimelineNode filled sm />
           </View>
 
           {/* Spacer between node and thumbs */}
@@ -170,7 +111,7 @@ export function TimelineMonthView({ memories, anniversaryMonth }: Props) {
           </View>
         </View>
       )}
-      contentContainerStyle={{ paddingBottom: 28 }}
+      contentContainerStyle={{ paddingBottom: 28, paddingRight: 16 }}
     />
   );
 }

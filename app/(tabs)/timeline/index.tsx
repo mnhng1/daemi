@@ -1,16 +1,20 @@
-import { useState, useMemo, useCallback } from "react";
-import { View, SectionList, RefreshControl } from "react-native";
+import { useState, useMemo, useRef, useCallback } from "react";
+import {
+  View,
+  ScrollView,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+} from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { FadeIn, useReducedMotion, runOnJS } from "react-native-reanimated";
-import { useCurrentCoupleSpace } from "../../../src/features/couple-space";
-import { useMemoriesWithQueue, groupMemoriesByDate, isMemoryGroup } from "../../../src/features/memories";
-import { MemoryTypeFilter, TimelineItem, MemoryGroup, isQueuedMemory } from "../../../src/features/memories/types";
+import { useCurrentCoupleSpace, useDayCount } from "../../../src/features/couple-space";
+import { useMemoriesWithQueue, buildDayRows } from "../../../src/features/memories";
+import { MemoryTypeFilter, isQueuedMemory } from "../../../src/features/memories/types";
 import type { MemoryWithAuthor } from "../../../src/types/database";
 import { useAnniversaryMonth } from "../../../src/features/collections";
 import { TimelineHeader } from "../../../src/components/timeline/timeline-header";
 import { TimelineTypeFilters } from "../../../src/components/timeline/timeline-type-filters";
-import { TimelineDateHeader } from "../../../src/components/timeline/timeline-date-header";
-import { TimelineRow } from "../../../src/components/timeline/timeline-row";
+import { TimelineDayView } from "../../../src/components/timeline/timeline-day-view";
 import { TimelineEmpty } from "../../../src/components/timeline/timeline-empty";
 import { TimelineLoading } from "../../../src/components/timeline/timeline-loading";
 import { TimelineError } from "../../../src/components/timeline/timeline-error";
@@ -18,7 +22,6 @@ import { OfflineBanner } from "../../../src/components/system/offline-banner";
 import { TimelineZoomBar, ZoomLevel } from "../../../src/components/timeline/timeline-zoom-bar";
 import { TimelineMonthView } from "../../../src/components/timeline/timeline-month-view";
 import { TimelineYearView } from "../../../src/components/timeline/timeline-year-view";
-import { colors } from "../../../src/lib/theme/tokens";
 
 function stepZoom(z: ZoomLevel, dir: "in" | "out"): ZoomLevel {
   if (dir === "in") {
@@ -35,14 +38,17 @@ function stepZoom(z: ZoomLevel, dir: "in" | "out"): ZoomLevel {
 export default function Timeline() {
   const [typeFilter, setTypeFilter] = useState<MemoryTypeFilter>("all");
   const [zoom, setZoom] = useState<ZoomLevel>("day");
+  const [scrolled, setScrolled] = useState(false);
+  const dayScrollRef = useRef<ScrollView | null>(null);
   const { data: coupleSpace } = useCurrentCoupleSpace();
   const spaceId = coupleSpace?.couple_spaces.id;
   const reduceMotion = useReducedMotion();
   const anniversaryMonth = useAnniversaryMonth(spaceId);
+  const dayCount = useDayCount(spaceId);
 
-  // Type filter applies only in day view; month/year always aggregate all types.
-  const effectiveFilter = zoom === "day" ? typeFilter : "all";
-  const { data: memories, isLoading, isError, refetch } = useMemoriesWithQueue(spaceId, effectiveFilter);
+  // Day view needs the unfiltered list so ghost rows can show hidden counts; the
+  // filter is applied inside buildDayRows. Month/year always aggregate all types.
+  const { data: memories, isLoading, isError, refetch } = useMemoriesWithQueue(spaceId, "all");
 
   // Split into queued and remote up-front so month/year can use remote directly.
   const { queued, remote } = useMemo(() => {
@@ -53,46 +59,22 @@ export default function Timeline() {
     };
   }, [memories]);
 
-  // Day-view sections built from the queued/remote split above.
-  const sections = useMemo(() => {
-    const remoteSections = groupMemoriesByDate(remote).map((section) => {
-      if (section.data.length <= 1) {
-        return section as { title: string; dateKey: string; data: TimelineItem[] };
-      }
-      const group: MemoryGroup = { _group: true, memories: section.data, id: section.dateKey };
-      return { title: section.title, dateKey: section.dateKey, data: [group] as TimelineItem[] };
-    });
-    if (queued.length === 0) return remoteSections;
-    return [
-      { title: "Uploading", dateKey: "__queued__", data: queued as TimelineItem[] },
-      ...remoteSections,
-    ];
-  }, [queued, remote]);
-
-  const renderSectionHeader = useCallback(
-    ({ section }: { section: { title: string } }) => {
-      const sectionIdx = sections.findIndex((s) => s.title === section.title);
-      return <TimelineDateHeader title={section.title} isFirst={sectionIdx === 0} />;
-    },
-    [sections]
+  const dayRows = useMemo(
+    () => buildDayRows(remote, queued, anniversaryMonth, typeFilter),
+    [remote, queued, anniversaryMonth, typeFilter]
   );
 
-  const renderItem = useCallback(
-    ({ item, index, section }: { item: TimelineItem; index: number; section: { data: TimelineItem[] } }) => {
-      const sectionIdx = sections.findIndex((s) => s.title === (section as any).title);
-      const isFirstGlobal = sectionIdx === 0 && index === 0;
-      const isLastGlobal = sectionIdx === sections.length - 1 && index === section.data.length - 1;
-      return (
-        <TimelineRow
-          item={item}
-          index={index}
-          isFirst={isFirstGlobal}
-          isLast={isLastGlobal}
-        />
-      );
+  const onDayScroll = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const top = e.nativeEvent.contentOffset.y;
+      setScrolled((prev) => (top > 320 !== prev ? top > 320 : prev));
     },
-    [sections]
+    []
   );
+
+  const jumpTop = useCallback(() => {
+    dayScrollRef.current?.scrollTo({ y: 0, animated: true });
+  }, []);
 
   // Pinch gesture: uses functional setState updater to avoid stale closure on zoom.
   const applyPinch = useCallback((scale: number) => {
@@ -111,7 +93,7 @@ export default function Timeline() {
   const renderDayContent = () => {
     if (isLoading) return <TimelineLoading />;
     if (isError) return <TimelineError onRetry={refetch} />;
-    if (sections.length === 0) return <TimelineEmpty />;
+    if (remote.length === 0 && queued.length === 0) return <TimelineEmpty />;
     return null;
   };
 
@@ -124,7 +106,7 @@ export default function Timeline() {
 
   return (
     <View className="flex-1 bg-paper">
-      <TimelineHeader />
+      <TimelineHeader scrolled={scrolled} onJumpTop={jumpTop} dayCount={dayCount} />
       <TimelineTypeFilters active={typeFilter} onChange={setTypeFilter} />
       <OfflineBanner spaceId={spaceId} />
       <TimelineZoomBar zoom={zoom} onChange={setZoom} />
@@ -132,22 +114,11 @@ export default function Timeline() {
         <Animated.View key={zoom} entering={reduceMotion ? undefined : FadeIn.duration(180)} style={{ flex: 1 }}>
           {zoom === "day" && (
             renderDayContent() ?? (
-              <SectionList
-                sections={sections}
-                keyExtractor={(item) => item.id}
-                renderSectionHeader={renderSectionHeader}
-                renderItem={renderItem}
-                stickySectionHeadersEnabled={false}
-                windowSize={5}
-                maxToRenderPerBatch={10}
-                refreshControl={
-                  <RefreshControl
-                    refreshing={false}
-                    onRefresh={refetch}
-                    tintColor={colors.accent}
-                  />
-                }
-                contentContainerStyle={{ paddingBottom: 32 }}
+              <TimelineDayView
+                rows={dayRows}
+                onRefresh={refetch}
+                scrollRef={dayScrollRef}
+                onScroll={onDayScroll}
               />
             )
           )}

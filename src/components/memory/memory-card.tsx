@@ -23,21 +23,24 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 interface Props {
   memory: MemoryWithAuthor | QueuedMemory;
   index: number;
+  rotation?: number;
 }
 
 interface InnerProps {
   memory: MemoryWithAuthor;
   index: number;
+  rotation?: number;
 }
 
-function MemoryCardInner({ memory, index }: InnerProps) {
+function MemoryCardInner({ memory, index, rotation = 0 }: InnerProps) {
   const router = useRouter();
   const reduceMotion = useReducedMotion();
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
 
+  // Scrapbook tilt (prototype tilt()) baked into the press transform.
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
+    transform: [{ rotate: `${rotation}deg` }, { scale: scale.value }],
     opacity: opacity.value,
   }));
 
@@ -78,7 +81,7 @@ function MemoryCardInner({ memory, index }: InnerProps) {
   );
 }
 
-export const MemoryCard = React.memo(function MemoryCard({ memory, index }: Props) {
+export const MemoryCard = React.memo(function MemoryCard({ memory, index, rotation }: Props) {
   if (isQueuedMemory(memory)) return <QueuedMemoryCard item={memory} />;
-  return <MemoryCardInner memory={memory} index={index} />;
+  return <MemoryCardInner memory={memory} index={index} rotation={rotation} />;
 });

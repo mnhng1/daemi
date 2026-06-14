@@ -9,4 +9,7 @@ export type { MemoryTypeFilter, TimelineDateSection, MemoryGroup, TimelineItem }
 export { isMemoryGroup, isQueuedMemory } from "./types";
 export { useMemoriesWithQueue } from "./use-memories-with-queue";
 export type { MemoryOrQueued } from "./use-memories-with-queue";
-export { groupByMonth, groupByWeekOfMonth, monthTypeCounts, monthTripMarker } from "./group-memories-by-month";
+export { groupByMonth, groupByWeekOfMonth, monthTypeCounts, monthTripMarker, scaffoldMonths } from "./group-memories-by-month";
+export type { MonthScaffoldRow } from "./group-memories-by-month";
+export { buildDayRows } from "./build-day-rows";
+export type { DayRow } from "./build-day-rows";

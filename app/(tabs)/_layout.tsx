@@ -4,6 +4,7 @@ import { colors } from "../../src/lib/theme/tokens";
 import { useSession } from "../../src/features/auth";
 import { useCurrentCoupleSpace } from "../../src/features/couple-space";
 import { useRealtimeSync } from "../../src/features/realtime";
+import { BottomTabBar } from "../../src/components/navigation/bottom-tab-bar";
 
 export default function TabLayout() {
   const { session, isLoading: sessionLoading } = useSession();
@@ -23,18 +24,17 @@ export default function TabLayout() {
 
   return (
     <Tabs
+      tabBar={(props) => <BottomTabBar {...props} />}
       screenOptions={{
-        tabBarActiveTintColor: colors.accent,
-        tabBarInactiveTintColor: colors.ink3,
-        tabBarStyle: { backgroundColor: colors.paper },
         headerStyle: { backgroundColor: colors.paper },
         headerTintColor: colors.ink,
       }}
     >
+      {/* Declaration order = tab-bar order: the centred `add` becomes the raised FAB. */}
       <Tabs.Screen name="timeline" options={{ title: "Timeline", headerShown: false }} />
       <Tabs.Screen name="collections" options={{ title: "Trips" }} />
-      <Tabs.Screen name="places" options={{ title: "Places" }} />
       <Tabs.Screen name="add" options={{ title: "Add", headerShown: false }} />
+      <Tabs.Screen name="places" options={{ title: "Places" }} />
       <Tabs.Screen name="search" options={{ title: "Find" }} />
     </Tabs>
   );

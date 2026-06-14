@@ -26,13 +26,13 @@ export function TimelineMiniThumb({ memory }: Props) {
         style={[
           cardShadow,
           {
-            width: 40,
-            height: 48,
-            borderRadius: 5,
+            width: 50,
+            height: 60,
+            borderRadius: 6,
             backgroundColor: colors.letterPaper,
             borderWidth: 1,
             borderColor: colors.line,
-            padding: 4,
+            padding: 5,
             overflow: "hidden",
           },
         ]}
@@ -57,9 +57,9 @@ export function TimelineMiniThumb({ memory }: Props) {
         style={[
           cardShadow,
           {
-            width: 56,
-            height: 30,
-            borderRadius: 6,
+            width: 70,
+            height: 38,
+            borderRadius: 8,
             backgroundColor: colors.accent,
             overflow: "hidden",
             alignItems: "center",
@@ -83,9 +83,9 @@ export function TimelineMiniThumb({ memory }: Props) {
       style={[
         cardShadow,
         {
-          width: 48,
-          height: 48,
-          borderRadius: 7,
+          width: 60,
+          height: 60,
+          borderRadius: 9,
           overflow: "hidden",
           borderWidth: 1,
           borderColor: colors.line,
@@ -95,11 +95,11 @@ export function TimelineMiniThumb({ memory }: Props) {
       {mediaUrl ? (
         <Image
           source={{ uri: mediaUrl }}
-          style={{ width: 48, height: 48 }}
+          style={{ width: 60, height: 60 }}
           resizeMode="cover"
         />
       ) : (
-        <View style={{ width: 48, height: 48, backgroundColor: colors.shade }} />
+        <View style={{ width: 60, height: 60, backgroundColor: colors.shade }} />
       )}
 
       {memory.type === "video" && (
