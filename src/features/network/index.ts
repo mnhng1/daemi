@@ -1,1 +1,1 @@
-export { useOnlineStatus, getIsOnline, registerCameOnlineCallback } from './use-online-status';
+export { useOnlineStatus, getIsOnline, registerCameOnlineCallback, isOnlineFromState } from './use-online-status';

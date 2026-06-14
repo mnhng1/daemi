@@ -1,13 +1,13 @@
 import { QueryClient, onlineManager } from "@tanstack/react-query";
 import NetInfo from "@react-native-community/netinfo";
+import { isOnlineFromState } from "../../features/network";
 
 // Wire NetInfo into TanStack Query's onlineManager so RQ pauses/resumes its
-// own retries based on real connectivity — single source of truth.
+// own retries based on real connectivity — single source of truth. Reuse the
+// shared isOnlineFromState predicate so this and useOnlineStatus can't drift.
 onlineManager.setEventListener((setOnline) => {
-  const unsubscribe = NetInfo.addEventListener((state: { isConnected: boolean | null; isInternetReachable: boolean | null }) => {
-    setOnline(
-      state.isConnected === true && state.isInternetReachable !== false,
-    );
+  const unsubscribe = NetInfo.addEventListener((state) => {
+    setOnline(isOnlineFromState(state));
   });
   return unsubscribe;
 });
