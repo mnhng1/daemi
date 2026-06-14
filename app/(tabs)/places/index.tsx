@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -98,6 +98,10 @@ export default function PlacesListScreen() {
 
   const { data: places, isLoading, isError } = useSpacePlaces(spaceId);
   const { data: coordinates } = useSpaceCoordinates(spaceId);
+
+  useEffect(() => {
+    console.log("[Places] PlacesListScreen — spaceId:", spaceId, "isLoading:", isLoading, "isError:", isError, "places:", places);
+  }, [spaceId, isLoading, isError, places]);
 
   const renderItem = useCallback(
     ({ item }: { item: SpacePlace }) => <PlaceCard item={item} />,
@@ -232,6 +236,7 @@ export default function PlacesListScreen() {
 
           {!isLoading && !isError && places && places.length > 0 && (
             <FlatList
+              style={{ flex: 1 }}
               data={places}
               keyExtractor={keyExtractor}
               renderItem={renderItem}
