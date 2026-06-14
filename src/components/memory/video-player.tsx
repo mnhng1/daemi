@@ -37,12 +37,10 @@ export function VideoPlayer({ memory }: Props) {
     if (!videoUrl) return;
     if (videoUrl === currentUrlRef.current) return;
     currentUrlRef.current = videoUrl;
-    try {
-      player.replace(videoUrl);
-    } catch {
-      // replace() may throw on some platforms if the player is not yet ready;
+    player.replaceAsync(videoUrl).catch(() => {
+      // replaceAsync may reject if the player is not yet ready;
       // the initial URL was already passed to useVideoPlayer above.
-    }
+    });
     setPlayerError(null);
   }, [videoUrl, player]);
 
