@@ -138,10 +138,12 @@ testing (`@react-native-community/netinfo` native module).
 - `OfflineBanner` on the timeline (warm-yellow, count, Retry)
 - Failed → retry / delete; never-uploaded draft → outright delete
 
-## Phase 13 — Timeline Zoom and Motion
+## Phase 13 — Timeline Zoom and Motion — code-complete, pending dev-build verification
 
-- Month view
-- Year view
-- Segmented zoom
-- Optional pinch gesture
-- Animation polish
+- Month view (`TimelineMonthView` — week-bucket SectionList with trip markers and anniversary ring)
+- Year view (`TimelineYearView` — month grid with colored density segments per memory type)
+- Segmented zoom bar (`TimelineZoomBar` — year / month / day pill control with pinch hint)
+- Pinch gesture (discrete snap via `Gesture.Pinch` + `runOnJS`; functional setState avoids stale-closure bug)
+- `FadeIn` motion on zoom switch via `Animated.View key={zoom}` (suppressed under reduce-motion)
+- Anniversary month wired from `useAnniversaryMonth(spaceId)` into both aggregate views
+- Type filter scoped to day view only; month/year always aggregate all types for correct density data
