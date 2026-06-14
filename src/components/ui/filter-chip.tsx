@@ -8,12 +8,14 @@ interface FilterChipProps {
   active: boolean;
   onPress: () => void;
   icon?: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
+  // Color for the icon when inactive (acts as a legend swatch). Defaults to ink3.
+  iconColor?: string;
 }
 
 // Prototype Chip (02-ui-primitives.js:210-223): compact pill, line border,
 // surface→accent on active, optional leading icon. Visual height stays small;
 // hitSlop keeps a ~44px touch target.
-export function FilterChip({ label, active, onPress, icon }: FilterChipProps) {
+export function FilterChip({ label, active, onPress, icon, iconColor }: FilterChipProps) {
   return (
     <Pressable
       onPress={onPress}
@@ -37,7 +39,7 @@ export function FilterChip({ label, active, onPress, icon }: FilterChipProps) {
         <MaterialCommunityIcons
           name={icon}
           size={13}
-          color={active ? "#fff" : colors.ink3}
+          color={active ? "#fff" : (iconColor ?? colors.ink3)}
         />
       )}
       <Text

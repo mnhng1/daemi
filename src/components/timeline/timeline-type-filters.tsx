@@ -3,16 +3,19 @@ import { ScrollView } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { FilterChip } from "../ui/filter-chip";
 import { MemoryTypeFilter } from "../../features/memories/types";
+import { memoryTypeColors } from "../../lib/theme/tokens";
 
 type IconName = React.ComponentProps<typeof MaterialCommunityIcons>["name"];
 
 // Labels + icons mirror prototype TYPE_LABEL / TYPE_ICON (04-timeline.js:77-78).
-const FILTERS: { key: MemoryTypeFilter; label: string; icon?: IconName }[] = [
+// iconColor matches the year-view density-bar segment so the chips double as the
+// color legend for that bar.
+const FILTERS: { key: MemoryTypeFilter; label: string; icon?: IconName; iconColor?: string }[] = [
   { key: "all", label: "all" },
-  { key: "photo", label: "photos", icon: "image" },
-  { key: "video", label: "video", icon: "movie" },
-  { key: "letter", label: "letters", icon: "pencil" },
-  { key: "ticket", label: "tickets", icon: "ticket-outline" },
+  { key: "photo", label: "photos", icon: "image", iconColor: memoryTypeColors.photo },
+  { key: "video", label: "video", icon: "movie", iconColor: memoryTypeColors.video },
+  { key: "letter", label: "letters", icon: "pencil", iconColor: memoryTypeColors.letter },
+  { key: "ticket", label: "tickets", icon: "ticket-outline", iconColor: memoryTypeColors.ticket },
 ];
 
 interface Props {
@@ -39,6 +42,7 @@ export function TimelineTypeFilters({ active, onChange }: Props) {
           key={f.key}
           label={f.label}
           icon={f.icon}
+          iconColor={f.iconColor}
           active={active === f.key}
           onPress={() => onChange(f.key)}
         />

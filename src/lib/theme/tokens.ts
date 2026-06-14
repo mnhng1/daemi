@@ -18,6 +18,16 @@ export const colors = {
   accentText: "#74506a",
 } as const;
 
+// Per-memory-type colors — single source of truth shared by the year-view
+// density bar segments AND the filter chips (which act as the color legend).
+// letter ≈ prototype `color-mix(in srgb, var(--accent) 40%, var(--ink4))`.
+export const memoryTypeColors: Record<"photo" | "video" | "letter" | "ticket", string> = {
+  photo: colors.ink3, // warm grey-brown
+  video: "#5f8a84", // muted teal — the one cool tone, so it reads distinctly from photo
+  letter: "#b89aae", // mauve
+  ticket: colors.accent, // plum
+};
+
 // Font families — mirrors the prototype `hand` theme (09-app-shell.js:19):
 // head "Caveat" (cursive display), ui "Patrick Hand". Loaded in app/_layout.tsx.
 export const fonts = {

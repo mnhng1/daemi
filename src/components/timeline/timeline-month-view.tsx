@@ -6,6 +6,7 @@ import {
   groupByWeekOfMonth,
   monthTripMarker,
 } from "../../features/memories";
+import { MemoryTypeFilter } from "../../features/memories/types";
 import { formatMonthLabel } from "../../lib/utils/date";
 import { colors, fonts } from "../../lib/theme/tokens";
 import { TimelineNode } from "./timeline-node";
@@ -15,6 +16,7 @@ import { TimelineMiniThumb } from "./timeline-mini-thumb";
 interface Props {
   memories: MemoryWithAuthor[];
   anniversaryMonth: number | null;
+  typeFilter: MemoryTypeFilter;
 }
 
 // Each section = one month bucket; each data row = one week bucket
@@ -33,9 +35,11 @@ interface MonthSection {
   data: WeekBucket[];
 }
 
-export function TimelineMonthView({ memories, anniversaryMonth }: Props) {
+export function TimelineMonthView({ memories, anniversaryMonth, typeFilter }: Props) {
   const sections = useMemo<MonthSection[]>(() => {
-    const groups = groupByMonth(memories);
+    const filtered =
+      typeFilter === "all" ? memories : memories.filter((m) => m.type === typeFilter);
+    const groups = groupByMonth(filtered);
     return groups.map(({ monthKey, year, month, items }) => {
       const weeks = groupByWeekOfMonth(items);
       const marker = monthTripMarker(items, anniversaryMonth, month);
@@ -52,7 +56,7 @@ export function TimelineMonthView({ memories, anniversaryMonth }: Props) {
         })),
       };
     });
-  }, [memories, anniversaryMonth]);
+  }, [memories, anniversaryMonth, typeFilter]);
 
   return (
     <SectionList<WeekBucket, MonthSection>
