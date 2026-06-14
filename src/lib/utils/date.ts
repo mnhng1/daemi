@@ -26,3 +26,18 @@ export function formatLetterDate(dateString: string): string {
   const day = d.getDate();
   return `${month} ${day}`;
 }
+
+// Mirrors prototype DU.fmt.monthKey — returns "YYYY-MM" for a "YYYY-MM-DD" date string.
+export function monthKey(dateStr: string): string {
+  const d = new Date(dateStr + "T00:00:00");
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  return `${year}-${month}`;
+}
+
+// Returns e.g. "Sep 2025" for (2025, 8) where month is 0-indexed (JS Date convention).
+export function formatMonthLabel(year: number, month: number): string {
+  return new Intl.DateTimeFormat("en-US", { month: "short", year: "numeric" }).format(
+    new Date(year, month, 1)
+  );
+}

@@ -5,15 +5,34 @@ interface Props {
   showTop?: boolean;
   showBottom?: boolean;
   nodeColor?: string;
+  size?: "sm" | "md";
 }
 
-export function TimelineSpine({ showTop = true, showBottom = true, nodeColor = colors.ink3 }: Props) {
+export function TimelineSpine({
+  showTop = true,
+  showBottom = true,
+  nodeColor = colors.ink3,
+  size = "md",
+}: Props) {
+  const nodeSize = size === "sm" ? 9 : 13;
+  const columnWidth = size === "sm" ? 20 : 44;
+
   return (
-    <View className="w-[44px] items-center" accessibilityElementsHidden={true} importantForAccessibility="no-hide-descendants">
+    <View
+      style={{ width: columnWidth, alignItems: "center" }}
+      accessibilityElementsHidden={true}
+      importantForAccessibility="no-hide-descendants"
+    >
       {showTop && <View className="w-[2px] flex-1 bg-ink-4" />}
       <View
-        className="w-[13px] h-[13px] rounded-full border-2"
-        style={{ borderColor: nodeColor, backgroundColor: colors.paper }}
+        style={{
+          width: nodeSize,
+          height: nodeSize,
+          borderRadius: nodeSize,
+          borderWidth: 2,
+          borderColor: nodeColor,
+          backgroundColor: colors.paper,
+        }}
       />
       {showBottom && <View className="w-[2px] flex-1 bg-ink-4" />}
     </View>
