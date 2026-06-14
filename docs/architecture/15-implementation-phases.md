@@ -125,14 +125,18 @@ Built on top of Phase 11. Status: code-complete on `main`; pending ship items be
 - `react-native-maps` map with list/map toggle (`places-map.tsx`); Apple Maps on
   iOS needs no API key. iOS only — Android not targeted.
 
-## Phase 12 — Offline Queue
+## Phase 12 — Offline Queue — complete, pending dev-build verification
 
-Largely absorbed into Phase 10B (the durable queue + resume + queued cards are
-built there for heavy video). What remains here is offline-specific:
+All six steps implemented on `main`. Requires an EAS dev-build before on-device
+testing (`@react-native-community/netinfo` native module).
 
-- Detect offline create and persist a local draft
-- Retry queued non-video memories when back online
-- (Queue store, retry, and queued-card UX are shared with 10B)
+- NetInfo connectivity module + `onlineManager` wiring (`src/features/network/`)
+- Queue processor generalised: photo / letter / ticket drain correctly; drain lock;
+  idempotent upsert; `triggerDrain` export
+- `useCreateMemory` offline fast-path + mid-flight network-error fallback → `enqueueDraft`
+- Queued card per-type rendering (letter placeholder, indeterminate spinner for non-video)
+- `OfflineBanner` on the timeline (warm-yellow, count, Retry)
+- Failed → retry / delete; never-uploaded draft → outright delete
 
 ## Phase 13 — Timeline Zoom and Motion
 

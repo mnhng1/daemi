@@ -5,6 +5,7 @@ import { uploadMultipart } from '../media/upload-multipart';
 import { uploadMemoryImage } from '../media/upload-memory-image';
 import type { UploadHandle } from '../media/upload-memory-image';
 import type { Database } from '../../types/database';
+import { registerCameOnlineCallback } from '../network';
 import {
   deleteQueueRow,
   getQueueRows,
@@ -59,6 +60,11 @@ export async function startQueueProcessor(
   userId: string,
 ): Promise<void> {
   _processorContext = { coupleSpaceId, userId };
+
+  // Re-drain when connectivity is restored while the app is foregrounded.
+  // The drain lock ensures this third trigger cannot double-pick with the
+  // AppState and launch triggers.
+  registerCameOnlineCallback(triggerDrain);
 
   // Re-drain the queue whenever the app returns to the foreground after an
   // OS-level background/suspension event.  This is the pragmatic recovery

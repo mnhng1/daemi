@@ -9,10 +9,11 @@ export {
   deleteQueueRow,
   resetStuckUploading,
   incrementRetry,
+  resetQueueRow,
 } from './db';
 export type { QueuePart, QueueRow } from './db';
 
 export { useUploadQueue, refreshQueue } from './use-upload-queue';
 export type { QueuedMemory } from './use-upload-queue';
 
-export { startQueueProcessor, setOnUploadComplete, getUploadHandle } from './queue-processor';
+export { startQueueProcessor, setOnUploadComplete, getUploadHandle, triggerDrain } from './queue-processor';

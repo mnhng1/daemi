@@ -10,7 +10,7 @@ export type QueuedMemory = {
   id: string;
   coupleSpaceId: string;
   memoryId: string;
-  type: 'photo' | 'video' | 'ticket';
+  type: 'photo' | 'video' | 'ticket' | 'letter';
   title: string | null;
   body: string | null;
   posterUri: string | null;
@@ -71,7 +71,7 @@ export function useUploadQueue(
           id: r.localId,
           coupleSpaceId: r.coupleSpaceId,
           memoryId: r.memoryId,
-          type: r.type as 'photo' | 'video' | 'ticket',
+          type: r.type as 'photo' | 'video' | 'ticket' | 'letter',
           title: r.title,
           body: r.body,
           posterUri: r.posterUri,

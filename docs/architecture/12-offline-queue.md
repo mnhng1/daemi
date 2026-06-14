@@ -1,10 +1,27 @@
 # Offline Queue Architecture
 
-## MVP Status
+## Status
 
-Offline queue is deferred.
+Phase 12 — **complete** (pending EAS dev-build for on-device verification;
+`@react-native-community/netinfo` is a native module requiring a rebuilt dev
+client). All six steps of the build plan are implemented on `main`:
 
-MVP should only handle:
+- **Step 1** — `@react-native-community/netinfo` connectivity module
+  (`src/features/network/`); `onlineManager` wired into TanStack Query;
+  reconnect drain trigger registered in `startQueueProcessor`.
+- **Step 2** — Queue processor generalised to all types (photo / letter / ticket
+  + existing video); drain lock; idempotent upsert; `triggerDrain` export.
+- **Step 3** — `useCreateMemory` offline fast-path (`getIsOnline` check) and
+  mid-flight fallback (`isNetworkError` catch → `enqueueDraft`).
+- **Step 4** — `QueuedMemory.type` widened to include `letter`; queued card
+  renders per type (letter placeholder, indeterminate spinner for non-video).
+- **Step 5** — `OfflineBanner` component mounted on the timeline screen.
+- **Step 6** — Failed → retry / delete; never-uploaded draft → outright delete;
+  `resetQueueRow` db helper.
+
+See the build plan for full details: [`12-offline-queue-impl-plan.md`](12-offline-queue-impl-plan.md).
+
+Original MVP scope (now superseded by the full queue) handled only:
 
 - upload loading state
 - upload error state
