@@ -124,7 +124,11 @@ export default function Timeline() {
           )}
           {zoom === "month" && (
             renderAggregateContent() ?? (
-              <TimelineMonthView memories={remote} anniversaryMonth={anniversaryMonth} />
+              <TimelineMonthView
+                memories={remote}
+                anniversaryMonth={anniversaryMonth}
+                typeFilter={typeFilter}
+              />
             )
           )}
           {zoom === "year" && (
@@ -132,6 +136,7 @@ export default function Timeline() {
               <TimelineYearView
                 memories={remote}
                 anniversaryMonth={anniversaryMonth}
+                typeFilter={typeFilter}
                 onZoomMonth={() => setZoom("month")}
               />
             )

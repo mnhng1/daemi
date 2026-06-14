@@ -7,26 +7,17 @@ import {
   scaffoldMonths,
   MonthScaffoldRow,
 } from "../../features/memories";
-import { colors, fonts } from "../../lib/theme/tokens";
+import { MemoryTypeFilter } from "../../features/memories/types";
+import { colors, fonts, memoryTypeColors } from "../../lib/theme/tokens";
 import { TimelineNode } from "./timeline-node";
 import { TimelineSpineLine } from "./timeline-spine-line";
 
 interface Props {
   memories: MemoryWithAuthor[];
   anniversaryMonth: number | null;
+  typeFilter: MemoryTypeFilter;
   onZoomMonth: () => void;
 }
-
-// Approximation of prototype `color-mix(in srgb, var(--accent) 40%, var(--ink4))`
-const LETTER_SEG_COLOR = "#b89aae";
-
-// Segment colors per type (prototype line 228)
-const SEG_COLOR: Record<string, string> = {
-  photo: colors.ink3,
-  video: colors.ink2,
-  letter: LETTER_SEG_COLOR,
-  ticket: colors.accent,
-};
 
 const TYPES = ["photo", "video", "letter", "ticket"] as const;
 
@@ -43,7 +34,7 @@ interface YearRow extends MonthScaffoldRow {
   showYear: boolean;
 }
 
-export function TimelineYearView({ memories, anniversaryMonth, onZoomMonth }: Props) {
+export function TimelineYearView({ memories, anniversaryMonth, typeFilter, onZoomMonth }: Props) {
   const rows = useMemo<YearRow[]>(() => {
     const scaffold = scaffoldMonths(memories, new Date());
     return scaffold.map((row, i) => ({
@@ -52,11 +43,13 @@ export function TimelineYearView({ memories, anniversaryMonth, onZoomMonth }: Pr
     }));
   }, [memories]);
 
-  // Busiest month sets the full-length reference for the volume bar.
-  const maxTotal = useMemo(
-    () => Math.max(1, ...rows.map((r) => r.items.length)),
-    [rows]
-  );
+  // The metric driving each bar's length: total memories ("all") or the count of
+  // the selected type. Busiest month sets the full-length reference.
+  const maxMetric = useMemo(() => {
+    const metric = (items: MemoryWithAuthor[]) =>
+      typeFilter === "all" ? items.length : items.filter((m) => m.type === typeFilter).length;
+    return Math.max(1, ...rows.map((r) => metric(r.items)));
+  }, [rows, typeFilter]);
 
   return (
     <ScrollView
@@ -76,35 +69,43 @@ export function TimelineYearView({ memories, anniversaryMonth, onZoomMonth }: Pr
 
       {rows.map((item) => {
         const counts = monthTypeCounts(item.items);
-        const marker = item.isEmpty
-          ? null
-          : monthTripMarker(item.items, anniversaryMonth, item.month);
+        // For "all", the metric is total memories; for a type, that type's count.
+        const metric = typeFilter === "all" ? counts.total : counts[typeFilter];
+        const hasContent = metric > 0;
+
+        const marker = hasContent
+          ? monthTripMarker(item.items, anniversaryMonth, item.month)
+          : null;
         const dateColor = item.isCurrentMonth
           ? colors.accent
-          : item.isEmpty
-            ? colors.ink3
-            : colors.ink;
-        const fillPct = item.isEmpty
-          ? 0
-          : Math.max(counts.total / maxTotal, MIN_BAR_FRACTION) * 100;
+          : hasContent
+            ? colors.ink
+            : colors.ink3;
+        const fillPct = hasContent ? Math.max(metric / maxMetric, MIN_BAR_FRACTION) * 100 : 0;
+
+        const caption = !hasContent
+          ? "—"
+          : typeFilter === "all"
+            ? `${counts.total} ${counts.total === 1 ? "memory" : "memories"}`
+            : `${metric} ${typeFilter}${metric === 1 ? "" : "s"}`;
 
         return (
-          // Empty months are non-interactive placeholders; real months zoom in.
+          // Months with nothing for the current filter are non-interactive placeholders.
           <Pressable
             key={item.monthKey}
-            disabled={item.isEmpty}
-            onPress={item.isEmpty ? undefined : onZoomMonth}
-            accessibilityRole={item.isEmpty ? "none" : "button"}
+            disabled={!hasContent}
+            onPress={hasContent ? onZoomMonth : undefined}
+            accessibilityRole={hasContent ? "button" : "none"}
             accessibilityLabel={
-              item.isEmpty
-                ? `${MON[item.month]} ${item.year}, no memories`
-                : `${MON[item.month]} ${item.year}, ${counts.total} memories. Tap to zoom in.`
+              hasContent
+                ? `${MON[item.month]} ${item.year}, ${caption}. Tap to zoom in.`
+                : `${MON[item.month]} ${item.year}, ${caption}`
             }
             style={{
               flexDirection: "row",
               alignItems: "flex-start",
               marginVertical: 6,
-              opacity: item.isEmpty ? 0.55 : 1,
+              opacity: hasContent ? 1 : 0.55,
             }}
           >
             {/* Date column */}
@@ -137,16 +138,16 @@ export function TimelineYearView({ memories, anniversaryMonth, onZoomMonth }: Pr
 
             {/* Spine node */}
             <View style={{ width: 20, alignItems: "center", paddingTop: 3 }}>
-              <TimelineNode filled={!item.isEmpty} accent={item.isCurrentMonth} sm />
+              <TimelineNode filled={hasContent} accent={item.isCurrentMonth} sm />
             </View>
 
             {/* Gap */}
             <View style={{ width: 12, flexShrink: 0 }} />
 
-            {/* Right content: density bar + caption */}
+            {/* Right content: volume bar + caption */}
             <View style={{ flex: 1, minWidth: 0 }}>
-              {item.isEmpty ? (
-                /* Faint placeholder track for a month with no memories */
+              {!hasContent ? (
+                /* Faint placeholder track for a month with nothing for this filter */
                 <View
                   style={{
                     height: 22,
@@ -168,7 +169,8 @@ export function TimelineYearView({ memories, anniversaryMonth, onZoomMonth }: Pr
                 </View>
               ) : (
                 /* Volume bar: full-width rail with a fill whose LENGTH = how many
-                   memories (vs the busiest month), and whose SEGMENTS = type mix. */
+                   memories (vs the busiest month). For "all" the fill's SEGMENTS
+                   show the type mix; for a single type it's that type's color. */
                 <View
                   style={{
                     height: 22,
@@ -180,13 +182,17 @@ export function TimelineYearView({ memories, anniversaryMonth, onZoomMonth }: Pr
                   }}
                 >
                   <View style={{ width: `${fillPct}%`, height: "100%", flexDirection: "row" }}>
-                    {TYPES.map((type) =>
-                      counts[type] > 0 ? (
-                        <View
-                          key={type}
-                          style={{ flex: counts[type], backgroundColor: SEG_COLOR[type] }}
-                        />
-                      ) : null
+                    {typeFilter === "all" ? (
+                      TYPES.map((type) =>
+                        counts[type] > 0 ? (
+                          <View
+                            key={type}
+                            style={{ flex: counts[type], backgroundColor: memoryTypeColors[type] }}
+                          />
+                        ) : null
+                      )
+                    ) : (
+                      <View style={{ flex: 1, backgroundColor: memoryTypeColors[typeFilter] }} />
                     )}
                   </View>
                 </View>
@@ -201,9 +207,7 @@ export function TimelineYearView({ memories, anniversaryMonth, onZoomMonth }: Pr
                 }}
               >
                 <Text style={{ fontFamily: fonts.ui, fontSize: 10, color: colors.ink2 }}>
-                  {item.isEmpty
-                    ? "—"
-                    : `${counts.total} ${counts.total === 1 ? "memory" : "memories"}`}
+                  {caption}
                 </Text>
                 {marker && (
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
