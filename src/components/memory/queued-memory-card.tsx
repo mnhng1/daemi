@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-import { View, Text, Image, StyleSheet, Pressable, Alert } from "react-native";
+import React from "react";
+import { View, Text, Image, StyleSheet, Pressable, Alert, ActivityIndicator } from "react-native";
 import { QueuedMemory } from "../../features/queue";
-import { getUploadHandle } from "../../features/queue/queue-processor";
-import { updateQueueStatus } from "../../features/queue/db";
+import { getUploadHandle, triggerDrain } from "../../features/queue/queue-processor";
+import { deleteQueueRow, updateQueueStatus, resetQueueRow } from "../../features/queue/db";
 import { refreshQueue } from "../../features/queue/use-upload-queue";
 import { colors } from "../../lib/theme/tokens";
 
@@ -11,7 +11,11 @@ interface Props {
 }
 
 export const QueuedMemoryCard = React.memo(function QueuedMemoryCard({ item }: Props) {
-  const progress = item.bytesTotal > 0
+  // Video rows track bytes; other types report percent via onProgress but
+  // bytesTotal stays 0 — show indeterminate spinner instead of a stuck bar.
+  const isVideo = item.type === "video";
+  const hasByteProgress = isVideo && item.bytesTotal > 0;
+  const progress = hasByteProgress
     ? (item.bytesUploaded / Math.max(item.bytesTotal, 1)) * 100
     : 0;
 
@@ -19,42 +23,107 @@ export const QueuedMemoryCard = React.memo(function QueuedMemoryCard({ item }: P
     item.status === "failed"
       ? "Upload failed"
       : item.status === "uploading"
-      ? `Uploading ${Math.round(progress)}%`
+      ? isVideo && hasByteProgress
+        ? `Uploading ${Math.round(progress)}%`
+        : "Uploading…"
       : "Queued";
 
-  function handlePress() {
-    if (item.status !== "uploading" && item.status !== "queued") return;
+  // Never-uploaded draft: no bytes transferred, no active handle.
+  // These can be deleted outright rather than going through failed state.
+  const isNeverUploaded = item.bytesUploaded === 0 && item.bytesTotal === 0;
 
-    Alert.alert(
-      "Cancel upload?",
-      "The video upload will be cancelled and removed from the queue.",
-      [
-        { text: "Keep uploading", style: "cancel" },
-        {
-          text: "Cancel upload",
-          style: "destructive",
-          onPress: async () => {
-            // Abort the in-flight XHR if the upload is active
-            const handle = getUploadHandle(item.id);
-            if (handle) {
-              handle.abort();
-            }
-            // Mark the row as failed so the queue processor skips it on
-            // the next drain and the UI removes it.
-            await updateQueueStatus(item.id, "failed", "Cancelled by user");
-            refreshQueue();
-          },
-        },
-      ],
-    );
+  async function handleDeleteDraft() {
+    await deleteQueueRow(item.id);
+    refreshQueue();
   }
 
+  async function handleRetryFailed() {
+    await resetQueueRow(item.id);
+    refreshQueue();
+    triggerDrain();
+  }
+
+  function handlePress() {
+    if (item.status === "failed") {
+      Alert.alert(
+        "Upload failed",
+        item.error ?? "The upload could not complete.",
+        [
+          { text: "Dismiss", style: "cancel" },
+          {
+            text: "Retry",
+            onPress: handleRetryFailed,
+          },
+          {
+            text: "Delete",
+            style: "destructive",
+            onPress: handleDeleteDraft,
+          },
+        ],
+      );
+      return;
+    }
+
+    if (item.status !== "uploading" && item.status !== "queued") return;
+
+    // For never-uploaded drafts (offline creates) offer outright delete.
+    // For in-progress uploads offer cancel → failed.
+    if (isNeverUploaded && item.status === "queued") {
+      Alert.alert(
+        "Remove draft?",
+        "This memory hasn't been uploaded yet. Remove it from the queue?",
+        [
+          { text: "Keep", style: "cancel" },
+          {
+            text: "Remove",
+            style: "destructive",
+            onPress: handleDeleteDraft,
+          },
+        ],
+      );
+    } else {
+      Alert.alert(
+        "Cancel upload?",
+        "This upload will be cancelled and removed from the queue.",
+        [
+          { text: "Keep uploading", style: "cancel" },
+          {
+            text: "Cancel upload",
+            style: "destructive",
+            onPress: async () => {
+              const handle = getUploadHandle(item.id);
+              if (handle) {
+                handle.abort();
+              }
+              await updateQueueStatus(item.id, "failed", "Cancelled by user");
+              refreshQueue();
+            },
+          },
+        ],
+      );
+    }
+  }
+
+  // Determine the thumbnail URI: posterUri for video/photo, localMediaUri as
+  // fallback for ticket. Letter has no image.
+  const imageUri = item.posterUri ?? (item.type !== "letter" ? item.localMediaUri : null);
+
   return (
-    <Pressable onPress={handlePress} accessibilityRole="button" accessibilityLabel="Cancel upload">
+    <Pressable onPress={handlePress} accessibilityRole="button" accessibilityLabel={item.status === "failed" ? "Retry or delete upload" : "Cancel upload"}>
       <View style={styles.container}>
-        {item.posterUri ? (
+        {/* Media area */}
+        {item.type === "letter" ? (
+          <View style={[styles.placeholder, styles.letterPlaceholder]}>
+            <Text style={styles.letterIcon}>✉</Text>
+            {item.body ? (
+              <Text style={styles.letterSnippet} numberOfLines={3}>
+                {item.body}
+              </Text>
+            ) : null}
+          </View>
+        ) : imageUri ? (
           <Image
-            source={{ uri: item.posterUri }}
+            source={{ uri: imageUri }}
             style={styles.image}
             resizeMode="cover"
             accessibilityLabel={item.title ?? "Queued memory"}
@@ -63,22 +132,33 @@ export const QueuedMemoryCard = React.memo(function QueuedMemoryCard({ item }: P
           <View style={styles.placeholder} />
         )}
 
+        {/* Overlay */}
         <View style={styles.overlay}>
-          <View style={styles.progressTrack}>
-            <View
-              style={[
-                styles.progressFill,
-                { width: `${progress}%` as `${number}%` },
-              ]}
-            />
-          </View>
+          {/* Progress indicator */}
+          {item.status === "uploading" && (
+            hasByteProgress ? (
+              <View style={styles.progressTrack}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    { width: `${progress}%` as `${number}%` },
+                  ]}
+                />
+              </View>
+            ) : (
+              <ActivityIndicator size="small" color={colors.accent} style={styles.spinner} />
+            )
+          )}
+
           <Text style={styles.label}>{label}</Text>
           {item.status === "failed" && item.error ? (
             <Text style={styles.errorText} numberOfLines={2}>
               {item.error}
             </Text>
           ) : null}
-          {(item.status === "uploading" || item.status === "queued") ? (
+          {item.status === "failed" ? (
+            <Text style={styles.tapHint}>Tap to retry or delete</Text>
+          ) : item.status === "uploading" || item.status === "queued" ? (
             <Text style={styles.tapHint}>Tap to cancel</Text>
           ) : null}
         </View>
@@ -91,6 +171,7 @@ const styles = StyleSheet.create({
   container: {
     borderRadius: 12,
     overflow: "hidden",
+    opacity: 0.75,
   },
   image: {
     width: "100%",
@@ -99,7 +180,25 @@ const styles = StyleSheet.create({
   placeholder: {
     width: "100%",
     height: 200,
-    backgroundColor: "#cccccc",
+    backgroundColor: colors.shade,
+  },
+  letterPlaceholder: {
+    backgroundColor: colors.letterPaper,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 20,
+    gap: 8,
+  },
+  letterIcon: {
+    fontSize: 36,
+    opacity: 0.5,
+  },
+  letterSnippet: {
+    color: colors.ink2,
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: "center",
+    fontStyle: "italic",
   },
   overlay: {
     position: "absolute",
@@ -121,6 +220,9 @@ const styles = StyleSheet.create({
     height: "100%",
     borderRadius: 2,
     backgroundColor: colors.accent,
+  },
+  spinner: {
+    alignSelf: "flex-start",
   },
   label: {
     color: "#ffffff",

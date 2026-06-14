@@ -11,6 +11,7 @@ import { TimelineRow } from "../../../src/components/timeline/timeline-row";
 import { TimelineEmpty } from "../../../src/components/timeline/timeline-empty";
 import { TimelineLoading } from "../../../src/components/timeline/timeline-loading";
 import { TimelineError } from "../../../src/components/timeline/timeline-error";
+import { OfflineBanner } from "../../../src/components/system/offline-banner";
 import { colors } from "../../../src/lib/theme/tokens";
 
 export default function Timeline() {
@@ -73,6 +74,7 @@ export default function Timeline() {
     <View className="flex-1 bg-paper">
       <TimelineHeader />
       <TimelineTypeFilters active={typeFilter} onChange={setTypeFilter} />
+      <OfflineBanner spaceId={spaceId} />
       {renderContent() ?? (
         <SectionList
           sections={sections}

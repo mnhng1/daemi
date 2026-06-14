@@ -321,3 +321,12 @@ export async function incrementRetry(localId: string): Promise<void> {
     [localId],
   );
 }
+
+/** Reset a failed row so the processor will attempt it again on the next drain. */
+export async function resetQueueRow(localId: string): Promise<void> {
+  const db = await getQueueDb();
+  await db.runAsync(
+    `UPDATE upload_queue SET status = 'queued', retry_count = 0, error = NULL WHERE local_id = ?`,
+    [localId],
+  );
+}
