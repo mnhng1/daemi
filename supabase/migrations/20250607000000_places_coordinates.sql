@@ -1,6 +1,6 @@
 alter table memories
-  add column latitude numeric(9,6),
-  add column longitude numeric(10,6);
+  add column if not exists latitude numeric(9,6),
+  add column if not exists longitude numeric(10,6);
 
 comment on column memories.latitude is 'WGS84 latitude from the places picker; null for free-text / legacy place_name.';
 comment on column memories.longitude is 'WGS84 longitude from the places picker; null for free-text / legacy place_name.';
@@ -13,7 +13,7 @@ security definer
 stable
 set search_path = public
 as $$
-  select place_name, count(*)
+  select place_name, count(*) as memory_count
   from memories
   where couple_space_id = space_id
     and deleted_at is null
