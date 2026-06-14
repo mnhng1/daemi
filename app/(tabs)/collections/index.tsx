@@ -82,7 +82,8 @@ function CollectionCard({
       onPress={() => router.push(`/collections/${item.id}`)}
       accessibilityRole="button"
       accessibilityLabel={item.name}
-      style={({ pressed }) => ({
+      // Static style: css-interop's wrapped Pressable ignores the function form.
+      style={{
         flexDirection: "row",
         alignItems: "center",
         gap: 14,
@@ -91,8 +92,7 @@ function CollectionCard({
         padding: 14,
         marginHorizontal: 16,
         marginBottom: 12,
-        opacity: pressed ? 0.75 : 1,
-      })}
+      }}
     >
       <CollectionCover
         memoryId={item.cover_memory_id}
@@ -165,9 +165,8 @@ export default function CollectionsListScreen() {
           accessibilityRole="button"
           accessibilityLabel="Create collection"
           hitSlop={12}
-          style={({ pressed }) => ({
-            opacity: !spaceId || !userId ? 0.3 : pressed ? 0.6 : 1,
-          })}
+          // Static style: css-interop's wrapped Pressable ignores the function form.
+          style={{ opacity: !spaceId || !userId ? 0.3 : 1 }}
         >
           <Text style={{ fontSize: 28, color: colors.accent, lineHeight: 32 }}>
             +

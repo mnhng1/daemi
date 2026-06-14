@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, Pressable } from "react-native";
-import { colors, cardShadow } from "../../lib/theme/tokens";
+import { colors, cardShadow, fonts } from "../../lib/theme/tokens";
 
 export type ZoomLevel = "day" | "month" | "year";
 
@@ -26,6 +26,7 @@ export function TimelineZoomBar({ zoom, onChange }: Props) {
       {/* ZOOM label */}
       <Text
         style={{
+          fontFamily: fonts.ui,
           fontSize: 9.5,
           fontWeight: "700",
           letterSpacing: 1,
@@ -41,7 +42,7 @@ export function TimelineZoomBar({ zoom, onChange }: Props) {
         style={{
           flexDirection: "row",
           backgroundColor: colors.surface2,
-          borderRadius: 10,
+          borderRadius: 12,
           padding: 3,
           borderWidth: 1,
           borderColor: colors.line,
@@ -56,22 +57,24 @@ export function TimelineZoomBar({ zoom, onChange }: Props) {
               accessibilityRole="tab"
               accessibilityLabel={`Zoom ${level}`}
               accessibilityState={{ selected: active }}
-              style={({ pressed }) => [
+              hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+              // NOTE: css-interop's wrapped Pressable ignores the function form of
+              // `style` (style={() => [...]}) — use a static array, like FilterChip.
+              style={[
                 {
-                  paddingHorizontal: 13,
-                  paddingVertical: 4,
-                  minHeight: 44,
-                  borderRadius: 8,
+                  paddingHorizontal: 15,
+                  paddingVertical: 6,
+                  borderRadius: 9,
                   alignItems: "center",
                   justifyContent: "center",
                   backgroundColor: active ? colors.surface : "transparent",
-                  opacity: pressed ? 0.7 : 1,
                 },
-                active ? cardShadow : undefined,
+                active ? cardShadow : null,
               ]}
             >
               <Text
                 style={{
+                  fontFamily: fonts.ui,
                   fontSize: 12,
                   fontWeight: active ? "700" : "500",
                   color: active ? colors.ink : colors.ink3,
@@ -91,7 +94,7 @@ export function TimelineZoomBar({ zoom, onChange }: Props) {
       <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
         {/* Magnifier glyph — lightweight, no icon dep */}
         <Text style={{ fontSize: 12, color: colors.ink3 }}>⌕</Text>
-        <Text style={{ fontSize: 10.5, color: colors.ink3 }}>pinch</Text>
+        <Text style={{ fontFamily: fonts.ui, fontSize: 10.5, color: colors.ink3 }}>pinch</Text>
       </View>
     </View>
   );

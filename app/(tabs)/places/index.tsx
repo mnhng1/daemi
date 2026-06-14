@@ -30,17 +30,19 @@ function PlaceCard({ item }: { item: SpacePlace }) {
       }
       accessibilityRole="button"
       accessibilityLabel={item.place_name}
-      style={({ pressed }) => ({
+      // Static style: css-interop's wrapped Pressable ignores the function form.
+      style={{
         flexDirection: "row",
         alignItems: "center",
         gap: 14,
         backgroundColor: colors.surface,
         borderRadius: 14,
+        borderWidth: 1,
+        borderColor: colors.surface2,
         padding: 14,
         marginHorizontal: 16,
         marginBottom: 12,
-        opacity: pressed ? 0.75 : 1,
-      })}
+      }}
     >
       <View style={{ flex: 1, gap: 4 }}>
         <Text

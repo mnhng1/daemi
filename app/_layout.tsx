@@ -12,6 +12,8 @@ import {
   CormorantInfant_400Regular_Italic,
   CormorantInfant_600SemiBold,
 } from "@expo-google-fonts/cormorant-infant";
+import { Caveat_400Regular, Caveat_700Bold } from "@expo-google-fonts/caveat";
+import { PatrickHand_400Regular } from "@expo-google-fonts/patrick-hand";
 import { queryClient } from "../src/lib/query/client";
 import { SessionProvider } from "../src/features/auth";
 import { startQueueProcessor, setOnUploadComplete } from "../src/features/queue";
@@ -40,6 +42,9 @@ export default function RootLayout() {
     CormorantInfant_400Regular,
     CormorantInfant_400Regular_Italic,
     CormorantInfant_600SemiBold,
+    Caveat_400Regular,
+    Caveat_700Bold,
+    PatrickHand_400Regular,
   });
 
   useEffect(() => {

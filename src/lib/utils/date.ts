@@ -35,6 +35,20 @@ export function monthKey(dateStr: string): string {
   return `${year}-${month}`;
 }
 
+// Mirrors prototype DU.fmt.monDay — "Sep 14" for a "YYYY-MM-DD" date string.
+export function monDay(dateStr: string): string {
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(
+    new Date(dateStr + "T00:00:00")
+  );
+}
+
+// Mirrors prototype DU.fmt.dow — "Sat" for a "YYYY-MM-DD" date string.
+export function dayOfWeek(dateStr: string): string {
+  return new Intl.DateTimeFormat("en-US", { weekday: "short" }).format(
+    new Date(dateStr + "T00:00:00")
+  );
+}
+
 // Returns e.g. "Sep 2025" for (2025, 8) where month is 0-indexed (JS Date convention).
 export function formatMonthLabel(year: number, month: number): string {
   return new Intl.DateTimeFormat("en-US", { month: "short", year: "numeric" }).format(

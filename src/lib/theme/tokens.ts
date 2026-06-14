@@ -18,6 +18,15 @@ export const colors = {
   accentText: "#74506a",
 } as const;
 
+// Font families — mirrors the prototype `hand` theme (09-app-shell.js:19):
+// head "Caveat" (cursive display), ui "Patrick Hand". Loaded in app/_layout.tsx.
+export const fonts = {
+  display: "Caveat_700Bold", // headings: title, dates, month markers, today, empty heading
+  displayRegular: "Caveat_400Regular",
+  ui: "PatrickHand_400Regular", // chips, day-of-week, counts, zoom labels, ghost text, subtitle
+  letter: "CormorantInfant_400Regular_Italic",
+} as const;
+
 export const cardShadow: ViewStyle = {
   shadowColor: "#46301c",
   shadowOffset: { width: 0, height: 5 },

@@ -9,21 +9,22 @@ import Animated, {
   runOnJS,
 } from "react-native-reanimated";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { colors } from "../../lib/theme/tokens";
+import { colors, fonts, cardShadow } from "../../lib/theme/tokens";
 
 const SHEET_HEIGHT = 520;
 const DISMISS_THRESHOLD = 120;
 
-const CARD_ICON_SIZE = 24;
-const CARD_ICON_BOX = 46;
-const CARD_ICON_RADIUS = 14;
-const CARD_ICON_MARGIN = 12;
-const CARD_PADDING_V = 18;
-const CARD_PADDING_H = 18;
-const CARD_TITLE_SIZE = 21;
-const CARD_SUBTITLE_SIZE = 13;
-const CARD_RADIUS = 18;
-const CARD_GAP = 14;
+// Card metrics mirror the prototype TypePicker (docs/prototype/src/05-add-composer.js).
+const CARD_ICON_SIZE = 20;
+const CARD_ICON_BOX = 38;
+const CARD_ICON_RADIUS = 11;
+const CARD_ICON_MARGIN = 8;
+const CARD_PADDING_V = 14;
+const CARD_PADDING_H = 14;
+const CARD_TITLE_SIZE = 19;
+const CARD_SUBTITLE_SIZE = 11;
+const CARD_RADIUS = 16;
+const CARD_GAP = 11;
 
 type MemoryType = "photo" | "video" | "letter" | "ticket";
 
@@ -39,14 +40,11 @@ function TypeCard({ icon, title, subtitle, onPress, disabled }: TypeCardProps) {
   return (
     <Pressable
       onPress={disabled ? undefined : onPress}
-      style={({ pressed }) => [
-        styles.card,
-        disabled && styles.cardDisabled,
-        !disabled && pressed && styles.cardPressed,
-      ]}
+      // Static style: css-interop's wrapped Pressable ignores the function form.
+      style={[styles.card, disabled && styles.cardDisabled]}
     >
       <View style={styles.iconContainer}>
-        <MaterialCommunityIcons name={icon} size={CARD_ICON_SIZE} color={colors.accent} />
+        <MaterialCommunityIcons name={icon} size={CARD_ICON_SIZE} color={colors.accentText} />
       </View>
       <Text style={styles.cardTitle}>{title}</Text>
       <Text style={styles.cardSubtitle}>{subtitle}</Text>
@@ -152,7 +150,7 @@ export function MemoryTypePicker({ onSelect, onDismiss }: Props) {
           </View>
 
           <View style={styles.footer}>
-            <Text style={styles.footerIcon}>📍</Text>
+            <MaterialCommunityIcons name="map-marker-outline" size={16} color={colors.ink3} />
             <Text style={styles.footerText}>
               you can pin a place & add to a collection inside any memory.
             </Text>
@@ -174,32 +172,33 @@ const styles = StyleSheet.create({
   },
   sheet: {
     backgroundColor: colors.paper,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: 24,
-    paddingBottom: 48,
-    paddingTop: 12,
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+    paddingTop: 14,
     alignSelf: "stretch",
   },
   handle: {
     alignSelf: "center",
     width: 40,
-    height: 4,
+    height: 5,
     backgroundColor: colors.ink4,
-    borderRadius: 2,
-    marginBottom: 20,
+    borderRadius: 3,
+    marginBottom: 14,
   },
   title: {
-    fontFamily: "CormorantInfant_600SemiBold",
-    fontSize: 28,
+    fontFamily: fonts.display,
+    fontSize: 25,
     textAlign: "center",
     color: colors.ink,
   },
   subtitle: {
-    fontSize: 14,
+    fontFamily: fonts.ui,
+    fontSize: 12,
     textAlign: "center",
     color: colors.ink3,
-    marginBottom: 24,
+    marginBottom: 16,
     marginTop: 2,
   },
   grid: {
@@ -211,20 +210,16 @@ const styles = StyleSheet.create({
   },
   card: {
     flex: 1,
-    minHeight: 124,
+    minHeight: 108,
     backgroundColor: colors.surface,
     borderRadius: CARD_RADIUS,
     borderWidth: 1,
-    borderColor: colors.ink4 + "55",
+    borderColor: colors.line,
     paddingVertical: CARD_PADDING_V,
     paddingHorizontal: CARD_PADDING_H,
     alignItems: "flex-start",
     justifyContent: "center",
-    shadowColor: colors.ink,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    elevation: 2,
+    ...cardShadow,
   },
   cardDisabled: {
     opacity: 0.45,
@@ -242,27 +237,33 @@ const styles = StyleSheet.create({
     marginBottom: CARD_ICON_MARGIN,
   },
   cardTitle: {
-    fontFamily: "CormorantInfant_600SemiBold",
+    fontFamily: fonts.display,
     fontSize: CARD_TITLE_SIZE,
     color: colors.ink,
-    marginBottom: 2,
+    marginBottom: 3,
   },
   cardSubtitle: {
+    fontFamily: fonts.ui,
     fontSize: CARD_SUBTITLE_SIZE,
     color: colors.ink3,
   },
   footer: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    marginTop: 24,
-    gap: 4,
-  },
-  footerIcon: {
-    fontSize: 12,
+    marginTop: 14,
+    gap: 9,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: colors.surface2,
+    borderWidth: 1,
+    borderColor: colors.line,
   },
   footerText: {
-    color: colors.ink3,
-    fontSize: 12,
+    flex: 1,
+    fontFamily: fonts.ui,
+    color: colors.ink2,
+    fontSize: 11,
+    lineHeight: 15,
   },
 });

@@ -17,6 +17,8 @@ module.exports = {
       fontFamily: {
         letter: ['CormorantInfant_400Regular_Italic'],
         'letter-title': ['CormorantInfant_600SemiBold'],
+        display: ['Caveat_700Bold'],
+        ui: ['PatrickHand_400Regular'],
       },
     },
   },
