@@ -1,8 +1,10 @@
 import { AppState, AppStateStatus } from 'react-native';
 import { supabase } from '../../lib/supabase/client';
 import { normalizeTags } from '../../lib/utils/text';
-import { uploadMultipart, MultipartParams } from '../media/upload-multipart';
+import { uploadMultipart } from '../media/upload-multipart';
+import { uploadMemoryImage } from '../media/upload-memory-image';
 import type { UploadHandle } from '../media/upload-memory-image';
+import type { Database } from '../../types/database';
 import {
   deleteQueueRow,
   getQueueRows,
@@ -12,6 +14,8 @@ import {
 } from './db';
 import type { QueueRow } from './db';
 import { refreshQueue } from './use-upload-queue';
+
+type MemoryInsert = Database['public']['Tables']['memories']['Insert'];
 
 // ---------------------------------------------------------------------------
 // Constants & state
@@ -24,11 +28,18 @@ let _onComplete: (() => void) | null = null;
 /** Tracks the current AppState subscription so we only register once. */
 let _appStateSubscription: ReturnType<typeof AppState.addEventListener> | null = null;
 
-/** Stored context so the AppState handler can re-trigger the drain. */
+/** Stored context so the AppState handler and triggerDrain can re-trigger the drain. */
 let _processorContext: { coupleSpaceId: string; userId: string } | null = null;
 
 /** Map from localId → active upload handle so UI can trigger abort. */
 const _activeHandles = new Map<string, UploadHandle>();
+
+/** Drain lock: true while a drain pass is running. */
+let _draining = false;
+
+/** Set to true if a drain trigger arrives while a drain is already running.
+ *  The finishing drain will run one more pass before releasing the lock. */
+let _rerun = false;
 
 /** Return the abort function for a queued item, or null if not active. */
 export function getUploadHandle(localId: string): UploadHandle | null {
@@ -75,21 +86,75 @@ export async function startQueueProcessor(
 }
 
 // ---------------------------------------------------------------------------
+// Trigger drain (for external callers e.g. post-enqueue)
+// ---------------------------------------------------------------------------
+
+/** Call after enqueuing a row (or when connectivity returns) to ensure a drain
+ *  pass runs. Safe to call at any time — the drain lock prevents double-runs. */
+export function triggerDrain(): void {
+  if (!_processorContext) return;
+  const { coupleSpaceId, userId } = _processorContext;
+  drainQueue(coupleSpaceId, userId);
+}
+
+// ---------------------------------------------------------------------------
 // Drain
 // ---------------------------------------------------------------------------
 
 async function drainQueue(coupleSpaceId: string, userId: string): Promise<void> {
-  const allRows = await getQueueRows(coupleSpaceId);
-  const eligible = allRows.filter(
-    (row) =>
-      row.status === 'queued' &&
-      row.userId === userId &&
-      row.retryCount < MAX_RETRIES,
-  );
-
-  for (const row of eligible) {
-    await processRow(row, coupleSpaceId, userId);
+  if (_draining) {
+    _rerun = true;
+    return;
   }
+
+  _draining = true;
+  try {
+    const allRows = await getQueueRows(coupleSpaceId);
+    const eligible = allRows.filter(
+      (row) =>
+        row.status === 'queued' &&
+        row.userId === userId &&
+        row.retryCount < MAX_RETRIES,
+    );
+
+    for (const row of eligible) {
+      await processRow(row, coupleSpaceId, userId);
+    }
+  } finally {
+    _draining = false;
+    if (_rerun) {
+      _rerun = false;
+      drainQueue(coupleSpaceId, userId);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Build the memory insert object (shared by all branches)
+// ---------------------------------------------------------------------------
+
+function buildMemoryInsert(
+  row: QueueRow,
+  storageKey: string | null,
+): MemoryInsert {
+  return {
+    id: row.memoryId,
+    couple_space_id: row.coupleSpaceId,
+    type: row.type as MemoryInsert['type'],
+    title: row.title ?? null,
+    body: row.body ?? null,
+    storage_key: storageKey,
+    thumbnail_url: row.thumbnailKey ?? null,
+    duration_seconds: row.durationSeconds ?? null,
+    media_size_bytes: row.mediaSizeBytes ?? null,
+    media_mime: row.mimeType ?? null,
+    date_happened: row.dateHappened,
+    created_by_user_id: row.userId,
+    tags: normalizeTags(row.tags),
+    place_name: row.placeName ?? null,
+    latitude: row.latitude ?? null,
+    longitude: row.longitude ?? null,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -101,59 +166,79 @@ async function processRow(
   coupleSpaceId: string,
   userId: string,
 ): Promise<void> {
-  const { localId, memoryId, type, title, body, localMediaUri, mimeType,
-          dateHappened, durationSeconds, mediaSizeBytes, retryCount, thumbnailKey } = row;
+  const { localId, type, localMediaUri, mimeType, retryCount } = row;
 
   await updateQueueStatus(localId, 'uploading');
   refreshQueue();
 
   try {
-    if (type === 'video' && localMediaUri && mimeType) {
-      const handle = uploadMultipart({
-        localId,
-        fileUri: localMediaUri,
-        coupleSpaceId,
-        memoryId,
-        mimeType,
-        onProgress: refreshQueue,
-      });
+    let storageKey: string | null = null;
 
-      _activeHandles.set(localId, handle);
-      let storageKey: string;
-      try {
-        const result = await handle.result;
-        storageKey = result.key;
-      } finally {
-        _activeHandles.delete(localId);
+    switch (type) {
+      case 'video': {
+        if (!localMediaUri || !mimeType) throw new Error('video row missing localMediaUri or mimeType');
+
+        const handle = uploadMultipart({
+          localId,
+          fileUri: localMediaUri,
+          coupleSpaceId: row.coupleSpaceId,
+          memoryId: row.memoryId,
+          mimeType,
+          onProgress: refreshQueue,
+        });
+
+        _activeHandles.set(localId, handle);
+        try {
+          const result = await handle.result;
+          storageKey = result.key;
+        } finally {
+          _activeHandles.delete(localId);
+        }
+        break;
       }
 
-      const { error: insertError } = await supabase.from('memories').insert([
-        {
-          id: memoryId,
-          couple_space_id: coupleSpaceId,
-          type,
-          title: title ?? null,
-          body: body ?? null,
-          storage_key: storageKey,
-          thumbnail_url: thumbnailKey ?? null,
-          duration_seconds: durationSeconds ?? null,
-          media_size_bytes: mediaSizeBytes ?? null,
-          media_mime: mimeType,
-          date_happened: dateHappened,
-          created_by_user_id: userId,
-          tags: normalizeTags(row.tags),
-          place_name: row.placeName ?? null,
-          latitude: row.latitude ?? null,
-          longitude: row.longitude ?? null,
-        },
-      ]);
+      case 'photo':
+      case 'ticket': {
+        if (localMediaUri && mimeType) {
+          const handle = uploadMemoryImage({
+            fileUri: localMediaUri,
+            coupleSpaceId: row.coupleSpaceId,
+            memoryId: row.memoryId,
+            mimeType,
+            onProgress: refreshQueue,
+          });
 
-      if (insertError) throw insertError;
+          _activeHandles.set(localId, handle);
+          try {
+            const result = await handle.result;
+            storageKey = result.key;
+          } finally {
+            _activeHandles.delete(localId);
+          }
+        }
+        // ticket with no media: storageKey stays null (note-only)
+        break;
+      }
 
-      await deleteQueueRow(localId);
-      refreshQueue();
-      _onComplete?.();
+      case 'letter': {
+        // No upload; storageKey stays null
+        break;
+      }
+
+      default: {
+        throw new Error(`queue-processor: unknown row type "${type}"`);
+      }
     }
+
+    // Idempotent upsert — safe to retry if insert succeeded but delete failed
+    const { error: insertError } = await supabase
+      .from('memories')
+      .upsert([buildMemoryInsert(row, storageKey)], { onConflict: 'id', ignoreDuplicates: true });
+    if (insertError) throw insertError;
+
+    await deleteQueueRow(localId);
+    refreshQueue();
+    _onComplete?.();
   } catch (err) {
     await incrementRetry(localId);
     const newCount = retryCount + 1;
