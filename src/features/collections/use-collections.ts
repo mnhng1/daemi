@@ -2,10 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase/client";
 import type { Collection } from "../../types/database";
 
+export type CollectionCover = { id: string; storage_key: string };
+
 export type CollectionWithMeta = Collection & {
   memory_count: number;
-  cover_storage_key: string | null;
-  cover_memory_id: string | null;
+  covers: CollectionCover[]; // up to 2, earliest photo-type live memories first
 };
 
 type MemoryRow = {
@@ -43,14 +44,11 @@ export function useCollections(spaceId: string | undefined) {
           .filter((m) => m.type === "photo" && m.storage_key !== null)
           .sort((a, b) => a.date_happened.localeCompare(b.date_happened));
 
-        const cover = photoMemories[0] ?? null;
-
         const { memories: _memories, ...collectionFields } = col;
         return {
           ...collectionFields,
           memory_count,
-          cover_storage_key: cover?.storage_key ?? null,
-          cover_memory_id: cover?.id ?? null,
+          covers: photoMemories.slice(0, 2).map((m) => ({ id: m.id, storage_key: m.storage_key! })),
         };
       });
     },
