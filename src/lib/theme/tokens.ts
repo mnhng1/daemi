@@ -34,6 +34,7 @@ export const fonts = {
   display: "Caveat_700Bold", // headings: title, dates, month markers, today, empty heading
   displayRegular: "Caveat_400Regular",
   ui: "PatrickHand_400Regular", // chips, day-of-week, counts, zoom labels, ghost text, subtitle
+  hand: "Caveat_400Regular", // handwriting — mirrors prototype `--font-hand` (letter body, captions)
   letter: "CormorantInfant_400Regular_Italic",
 } as const;
 
