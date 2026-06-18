@@ -50,9 +50,16 @@
         "expo-build-properties",
         {
           "ios": {
-            "backgroundModes": ["fetch", "processing"]
+            "backgroundModes": [
+              "fetch",
+              "processing"
+            ]
           }
         }
+      ],
+      [
+        "@react-native-google-signin/google-signin",
+        { "iosUrlScheme": "com.googleusercontent.apps.PLACEHOLDER_REVERSED_CLIENT_ID" }
       ]
     ]
   }
