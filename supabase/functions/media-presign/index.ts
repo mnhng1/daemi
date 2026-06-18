@@ -16,6 +16,14 @@ const ALLOWED_MIME_TYPES = new Set([
   "video/quicktime",
 ]);
 
+// Avatars are images only — no video.
+const AVATAR_MIME_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/heic",
+]);
+
 const MIME_TO_EXT: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
@@ -107,6 +115,8 @@ Deno.serve(async (req: Request) => {
   const VALID_ACTIONS = new Set([
     "upload",
     "download",
+    "avatar-upload",
+    "avatar-download",
     "create-multipart",
     "sign-part",
     "complete-multipart",
@@ -116,13 +126,19 @@ Deno.serve(async (req: Request) => {
     return jsonResponse(
       {
         error:
-          "Invalid action. Must be one of: upload, download, create-multipart, sign-part, complete-multipart, abort-multipart",
+          "Invalid action. Must be one of: upload, download, avatar-upload, avatar-download, create-multipart, sign-part, complete-multipart, abort-multipart",
       },
       400,
     );
   }
 
-  if (!UUID_RE.test(coupleSpaceId) || !UUID_RE.test(memoryId)) {
+  // Avatar actions have no memory row, so they do not carry a memoryId. Every
+  // other action still requires both UUIDs exactly as before (behavior preserved).
+  const isAvatarAction = action === "avatar-upload" || action === "avatar-download";
+  if (!UUID_RE.test(coupleSpaceId)) {
+    return jsonResponse({ error: "Invalid coupleSpaceId format" }, 400);
+  }
+  if (!isAvatarAction && !UUID_RE.test(memoryId)) {
     return jsonResponse({ error: "Invalid coupleSpaceId or memoryId format" }, 400);
   }
 
@@ -187,6 +203,52 @@ Deno.serve(async (req: Request) => {
 
     if (!memory) {
       return jsonResponse({ error: "Memory not found in this couple space" }, 404);
+    }
+
+    const requestedExpires = typeof body.expires === "number" ? body.expires : 3600;
+    const clampedExpires = Math.min(requestedExpires, 43200);
+
+    const url = (await r2.sign(
+      new Request(`${R2_URL}/${BUCKET}/${body.key}?X-Amz-Expires=${clampedExpires}`),
+      { aws: { signQuery: true } },
+    )).url.toString();
+
+    return jsonResponse({ url });
+  }
+
+  // ── avatar-upload ────────────────────────────────────────────────────────────
+  // No memory row exists for avatars. The key is derived from the authenticated
+  // user (JWT `user.id`), never a client-supplied id, so a member cannot overwrite
+  // their partner's avatar. The membership check above already gates the space.
+
+  if (action === "avatar-upload") {
+    if (!mimeType || !AVATAR_MIME_TYPES.has(mimeType)) {
+      return jsonResponse({ error: "Unsupported or missing mimeType for avatar" }, 400);
+    }
+    const ext = MIME_TO_EXT[mimeType];
+    const key = `couple-spaces/${coupleSpaceId}/avatars/${user.id}.${ext}`;
+
+    const url = (await r2.sign(
+      new Request(`${R2_URL}/${BUCKET}/${key}?X-Amz-Expires=600`, {
+        method: "PUT",
+        headers: { "Content-Type": mimeType },
+      }),
+      { aws: { signQuery: true } },
+    )).url.toString();
+
+    return jsonResponse({ url, key });
+  }
+
+  // ── avatar-download ──────────────────────────────────────────────────────────
+  // Either partner may read an avatar in their shared space (membership-gated),
+  // but there is no memories-table lookup — avatars are not memory rows.
+
+  if (action === "avatar-download") {
+    if (!body.key) {
+      return jsonResponse({ error: "key is required for download" }, 400);
+    }
+    if (!body.key.startsWith(`couple-spaces/${coupleSpaceId}/avatars/`)) {
+      return jsonResponse({ error: "Invalid avatar key for this couple space" }, 403);
     }
 
     const requestedExpires = typeof body.expires === "number" ? body.expires : 3600;

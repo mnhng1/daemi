@@ -13,7 +13,9 @@ const TAB_META: Record<string, TabMeta> = {
   timeline: { label: "timeline", icon: "clock-outline" },
   collections: { label: "trips", icon: "folder-outline" },
   places: { label: "places", icon: "map-marker-outline" },
-  search: { label: "find", icon: "magnify" },
+  settings: { label: "you", icon: "account-outline" },
+  // `search` is intentionally absent: it's hidden from the bar (href: null in the
+  // tabs layout). Any lingering search route renders nothing via the !meta guard.
 };
 
 // Structural subset of @react-navigation BottomTabBarProps — only what we read.
