@@ -6,20 +6,20 @@ import {
   NativeScrollEvent,
 } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Animated, { FadeIn, useReducedMotion, runOnJS } from "react-native-reanimated";
+import Animated, { withTiming, useReducedMotion, runOnJS } from "react-native-reanimated";
 import { useCurrentCoupleSpace, useDayCount } from "../../../src/features/couple-space";
 import { useMemoriesWithQueue, buildDayRows } from "../../../src/features/memories";
 import { MemoryTypeFilter, isQueuedMemory } from "../../../src/features/memories/types";
 import type { MemoryWithAuthor } from "../../../src/types/database";
 import { useAnniversaryMonth } from "../../../src/features/collections";
 import { TimelineHeader } from "../../../src/components/timeline/timeline-header";
-import { TimelineTypeFilters } from "../../../src/components/timeline/timeline-type-filters";
+import { TimelineFilterPopover } from "../../../src/components/timeline/timeline-filter-popover";
 import { TimelineDayView } from "../../../src/components/timeline/timeline-day-view";
 import { TimelineEmpty } from "../../../src/components/timeline/timeline-empty";
 import { TimelineLoading } from "../../../src/components/timeline/timeline-loading";
 import { TimelineError } from "../../../src/components/timeline/timeline-error";
 import { OfflineBanner } from "../../../src/components/system/offline-banner";
-import { TimelineZoomBar, ZoomLevel } from "../../../src/components/timeline/timeline-zoom-bar";
+import { ZoomLevel } from "../../../src/components/timeline/timeline-zoom-bar";
 import { TimelineMonthView } from "../../../src/components/timeline/timeline-month-view";
 import { TimelineYearView } from "../../../src/components/timeline/timeline-year-view";
 
@@ -35,10 +35,44 @@ function stepZoom(z: ZoomLevel, dir: "in" | "out"): ZoomLevel {
   }
 }
 
+// Detail rank: year (coarse) < month < day (fine). Higher rank = more zoomed in.
+const ZOOM_RANK: Record<ZoomLevel, number> = { year: 0, month: 1, day: 2 };
+
+// Custom directional entering animations (Reanimated custom-animation API):
+// zooming toward more detail grows the new view into place; toward less detail
+// it shrinks into place — reading as a camera moving closer / further away.
+function enterZoomIn() {
+  "worklet";
+  return {
+    initialValues: { opacity: 0, transform: [{ scale: 0.88 }] },
+    animations: {
+      opacity: withTiming(1, { duration: 180 }),
+      transform: [{ scale: withTiming(1, { duration: 220 }) }],
+    },
+  };
+}
+
+function enterZoomOut() {
+  "worklet";
+  return {
+    initialValues: { opacity: 0, transform: [{ scale: 1.12 }] },
+    animations: {
+      opacity: withTiming(1, { duration: 180 }),
+      transform: [{ scale: withTiming(1, { duration: 220 }) }],
+    },
+  };
+}
+
 export default function Timeline() {
   const [typeFilter, setTypeFilter] = useState<MemoryTypeFilter>("all");
   const [zoom, setZoom] = useState<ZoomLevel>("day");
   const [scrolled, setScrolled] = useState(false);
+  // Type filters live in a popover anchored to the header filter button rather
+  // than an always-on row, to save vertical space.
+  const [filterMenuOpen, setFilterMenuOpen] = useState(false);
+  // Direction of the last zoom change — picks the entering animation. Set inside
+  // the state updater so it's correct for the same render that re-keys the view.
+  const dirRef = useRef<"in" | "out">("in");
   const dayScrollRef = useRef<ScrollView | null>(null);
   const { data: coupleSpace } = useCurrentCoupleSpace();
   const spaceId = coupleSpace?.couple_spaces.id;
@@ -76,14 +110,31 @@ export default function Timeline() {
     dayScrollRef.current?.scrollTo({ y: 0, animated: true });
   }, []);
 
-  // Pinch gesture: uses functional setState updater to avoid stale closure on zoom.
-  const applyPinch = useCallback((scale: number) => {
-    setZoom((z) => {
-      if (scale > 1.15) return stepZoom(z, "in");
-      if (scale < 0.85) return stepZoom(z, "out");
-      return z;
+  // Single entry point for zoom changes: records direction (for the entering
+  // animation) before committing the new level. Functional updater avoids a
+  // stale closure on `zoom`.
+  const changeZoom = useCallback((next: ZoomLevel) => {
+    setZoom((cur) => {
+      if (next === cur) return cur;
+      dirRef.current = ZOOM_RANK[next] > ZOOM_RANK[cur] ? "in" : "out";
+      return next;
     });
   }, []);
+
+  // Pinch gesture: derive the next level from the current one, then route through
+  // changeZoom so direction tracking lives in one place.
+  const applyPinch = useCallback(
+    (scale: number) => {
+      setZoom((z) => {
+        const next =
+          scale > 1.15 ? stepZoom(z, "in") : scale < 0.85 ? stepZoom(z, "out") : z;
+        if (next === z) return z;
+        dirRef.current = ZOOM_RANK[next] > ZOOM_RANK[z] ? "in" : "out";
+        return next;
+      });
+    },
+    []
+  );
 
   const pinch = Gesture.Pinch().onEnd((e) => {
     "worklet";
@@ -106,12 +157,28 @@ export default function Timeline() {
 
   return (
     <View className="flex-1 bg-paper">
-      <TimelineHeader scrolled={scrolled} onJumpTop={jumpTop} dayCount={dayCount} />
-      <TimelineTypeFilters active={typeFilter} onChange={setTypeFilter} />
+      <TimelineHeader
+        scrolled={scrolled}
+        onJumpTop={jumpTop}
+        dayCount={dayCount}
+        filtersActive={filterMenuOpen || typeFilter !== "all"}
+        onToggleFilters={() => setFilterMenuOpen((o) => !o)}
+      />
+      <TimelineFilterPopover
+        visible={filterMenuOpen}
+        onClose={() => setFilterMenuOpen(false)}
+        active={typeFilter}
+        onChange={setTypeFilter}
+      />
       <OfflineBanner spaceId={spaceId} />
-      <TimelineZoomBar zoom={zoom} onChange={setZoom} />
       <GestureDetector gesture={pinch}>
-        <Animated.View key={zoom} entering={reduceMotion ? undefined : FadeIn.duration(180)} style={{ flex: 1 }}>
+        <Animated.View
+          key={zoom}
+          entering={
+            reduceMotion ? undefined : dirRef.current === "in" ? enterZoomIn : enterZoomOut
+          }
+          style={{ flex: 1 }}
+        >
           {zoom === "day" && (
             renderDayContent() ?? (
               <TimelineDayView
@@ -137,7 +204,7 @@ export default function Timeline() {
                 memories={remote}
                 anniversaryMonth={anniversaryMonth}
                 typeFilter={typeFilter}
-                onZoomMonth={() => setZoom("month")}
+                onZoomMonth={() => changeZoom("month")}
               />
             )
           )}

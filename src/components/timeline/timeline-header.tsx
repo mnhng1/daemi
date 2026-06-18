@@ -1,6 +1,6 @@
 import { View, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { router } from "expo-router";
 import { colors, fonts } from "../../lib/theme/tokens";
 import { IconButton } from "../ui/icon-button";
 
@@ -8,20 +8,27 @@ interface Props {
   scrolled: boolean;
   onJumpTop: () => void;
   dayCount: number | null;
+  filtersActive: boolean;
+  onToggleFilters: () => void;
 }
 
-// Prototype AppHeader (02-ui-primitives.js:140-155, usage 04-timeline.js:328-333):
-// centered title + day-count subtitle, left heart→places (swaps to scroll-to-top
-// when scrolled), right search.
-export function TimelineHeader({ scrolled, onJumpTop, dayCount }: Props) {
+// Title + day-count subtitle sit top-left; the right cluster holds the filter
+// toggle (collapses the type-filter row) and search, plus a scroll-to-top
+// chevron that appears once scrolled.
+export function TimelineHeader({
+  scrolled,
+  onJumpTop,
+  dayCount,
+  filtersActive,
+  onToggleFilters,
+}: Props) {
   const insets = useSafeAreaInsets();
-  const router = useRouter();
 
   return (
     <View
       style={{
         paddingTop: insets.top + 6,
-        paddingBottom: 12,
+        paddingBottom: 10,
         paddingHorizontal: 16,
         flexDirection: "row",
         alignItems: "center",
@@ -30,19 +37,7 @@ export function TimelineHeader({ scrolled, onJumpTop, dayCount }: Props) {
         borderBottomColor: colors.line,
       }}
     >
-      <View style={{ minWidth: 34, alignItems: "flex-start" }}>
-        {scrolled ? (
-          <IconButton icon="chevron-up" active onPress={onJumpTop} accessibilityLabel="Scroll to top" />
-        ) : (
-          <IconButton
-            icon="heart-outline"
-            onPress={() => router.push("/(tabs)/places")}
-            accessibilityLabel="Open places"
-          />
-        )}
-      </View>
-
-      <View style={{ flex: 1, alignItems: "center" }}>
+      <View style={{ flex: 1, alignItems: "flex-start" }}>
         <Text style={{ fontFamily: fonts.display, fontSize: 28, fontWeight: "700", color: colors.ink, lineHeight: 30 }}>
           daemi
         </Text>
@@ -53,7 +48,16 @@ export function TimelineHeader({ scrolled, onJumpTop, dayCount }: Props) {
         )}
       </View>
 
-      <View style={{ minWidth: 34, alignItems: "flex-end" }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        {scrolled && (
+          <IconButton icon="chevron-up" active onPress={onJumpTop} accessibilityLabel="Scroll to top" />
+        )}
+        <IconButton
+          icon="filter-variant"
+          active={filtersActive}
+          onPress={onToggleFilters}
+          accessibilityLabel="Filter memories"
+        />
         <IconButton
           icon="magnify"
           onPress={() => router.push("/(tabs)/search")}
