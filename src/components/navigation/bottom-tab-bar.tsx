@@ -11,7 +11,7 @@ type TabMeta = { label: string; icon: keyof typeof MaterialCommunityIcons.glyphM
 
 const TAB_META: Record<string, TabMeta> = {
   timeline: { label: "timeline", icon: "clock-outline" },
-  collections: { label: "trips", icon: "folder-outline" },
+  collections: { label: "collections", icon: "folder-outline" },
   places: { label: "places", icon: "map-marker-outline" },
   settings: { label: "you", icon: "account-outline" },
   // `search` is intentionally absent: it's hidden from the bar (href: null in the
