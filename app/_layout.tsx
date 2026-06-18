@@ -14,6 +14,7 @@ import {
 } from "@expo-google-fonts/cormorant-infant";
 import { Caveat_400Regular, Caveat_700Bold } from "@expo-google-fonts/caveat";
 import { PatrickHand_400Regular } from "@expo-google-fonts/patrick-hand";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { queryClient } from "../src/lib/query/client";
 import { SessionProvider } from "../src/features/auth";
 import { startQueueProcessor, setOnUploadComplete } from "../src/features/queue";
@@ -45,6 +46,11 @@ export default function RootLayout() {
     Caveat_400Regular,
     Caveat_700Bold,
     PatrickHand_400Regular,
+    // Preload the icon glyph fonts too. Without this, vector-icon glyphs can paint
+    // before their TTF is registered, so iOS lays them out with NaN metrics and logs
+    // a burst of "[CoreGraphics] … NaN" / "CGPathCloseSubpath: no current point".
+    ...Ionicons.font,
+    ...MaterialCommunityIcons.font,
   });
 
   useEffect(() => {

@@ -35,7 +35,10 @@ export default function TabLayout() {
       <Tabs.Screen name="collections" options={{ title: "Trips" }} />
       <Tabs.Screen name="add" options={{ title: "Add", headerShown: false }} />
       <Tabs.Screen name="places" options={{ title: "Places" }} />
-      <Tabs.Screen name="search" options={{ title: "Find" }} />
+      <Tabs.Screen name="settings" options={{ title: "You", headerShown: false }} />
+      {/* Search stays a mounted route (Timeline header pushes to it) but is hidden
+          from the tab bar — `href: null` removes it from the bar's route list. */}
+      <Tabs.Screen name="search" options={{ href: null, title: "Find" }} />
     </Tabs>
   );
 }
