@@ -32,7 +32,7 @@ export default function TabLayout() {
     >
       {/* Declaration order = tab-bar order: the centred `add` becomes the raised FAB. */}
       <Tabs.Screen name="timeline" options={{ title: "Timeline", headerShown: false }} />
-      <Tabs.Screen name="collections" options={{ title: "Trips" }} />
+      <Tabs.Screen name="collections" options={{ title: "Collections" }} />
       <Tabs.Screen name="add" options={{ title: "Add", headerShown: false }} />
       <Tabs.Screen name="places" options={{ title: "Places" }} />
       <Tabs.Screen name="settings" options={{ title: "You", headerShown: false }} />

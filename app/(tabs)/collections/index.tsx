@@ -253,13 +253,7 @@ export default function CollectionsListScreen() {
           borderBottomColor: colors.line,
         }}
       >
-        <View style={{ minWidth: 34, alignItems: "flex-start" }}>
-          <IconButton
-            icon="heart-outline"
-            onPress={() => router.push("/(tabs)/timeline")}
-            accessibilityLabel="Go to timeline"
-          />
-        </View>
+        <View style={{ minWidth: 34, alignItems: "flex-start" }} />
 
         <View style={{ flex: 1, alignItems: "center" }}>
           <Text
@@ -270,7 +264,7 @@ export default function CollectionsListScreen() {
               lineHeight: 26,
             }}
           >
-            Trips & moments
+            Collections
           </Text>
           {data != null && (
             <Text
