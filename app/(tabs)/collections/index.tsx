@@ -240,28 +240,24 @@ export default function CollectionsListScreen() {
       style={{ flex: 1, backgroundColor: colors.paper }}
       edges={["top"]}
     >
-      {/* Header — Change 3 */}
+      {/* Header — title top-left (matches timeline / You), create on the right */}
       <View
         style={{
           paddingTop: 6,
-          paddingBottom: 12,
+          paddingBottom: 10,
           paddingHorizontal: 16,
           flexDirection: "row",
           alignItems: "center",
           gap: 10,
-          borderBottomWidth: 1,
-          borderBottomColor: colors.line,
         }}
       >
-        <View style={{ minWidth: 34, alignItems: "flex-start" }} />
-
-        <View style={{ flex: 1, alignItems: "center" }}>
+        <View style={{ flex: 1, alignItems: "flex-start" }}>
           <Text
             style={{
               fontFamily: fonts.display,
-              fontSize: 24,
+              fontSize: 28,
               color: colors.ink,
-              lineHeight: 26,
+              lineHeight: 30,
             }}
           >
             Collections
@@ -280,14 +276,12 @@ export default function CollectionsListScreen() {
           )}
         </View>
 
-        <View style={{ minWidth: 34, alignItems: "flex-end" }}>
-          <View style={{ opacity: canCreate ? 1 : 0.3 }}>
-            <IconButton
-              icon="plus"
-              onPress={() => setCreateVisible(true)}
-              accessibilityLabel="Create collection"
-            />
-          </View>
+        <View style={{ opacity: canCreate ? 1 : 0.3 }}>
+          <IconButton
+            icon="plus"
+            onPress={() => setCreateVisible(true)}
+            accessibilityLabel="Create collection"
+          />
         </View>
       </View>
 

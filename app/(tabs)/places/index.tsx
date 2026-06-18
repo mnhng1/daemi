@@ -15,7 +15,7 @@ import {
 } from "../../../src/features/places";
 import type { SpacePlace } from "../../../src/features/places";
 import { PlacesMap } from "../../../src/components/places/places-map";
-import { colors } from "../../../src/lib/theme/tokens";
+import { colors, fonts } from "../../../src/lib/theme/tokens";
 
 type ViewMode = "list" | "map";
 
@@ -121,11 +121,18 @@ export default function PlacesListScreen() {
           alignItems: "center",
           justifyContent: "space-between",
           paddingHorizontal: 16,
-          paddingTop: 8,
-          paddingBottom: 16,
+          paddingTop: 6,
+          paddingBottom: 12,
         }}
       >
-        <Text style={{ fontSize: 24, fontWeight: "700", color: colors.ink }}>
+        <Text
+          style={{
+            fontFamily: fonts.display,
+            fontSize: 28,
+            color: colors.ink,
+            lineHeight: 30,
+          }}
+        >
           Places
         </Text>
         <View style={{ flexDirection: "row", gap: 8 }}>
