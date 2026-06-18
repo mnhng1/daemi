@@ -1,151 +1,308 @@
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  ScrollView,
-  Platform,
   ActivityIndicator,
+  Platform,
 } from "react-native";
-import { Link } from "expo-router";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { router } from "expo-router";
 import { useState } from "react";
-import { useSignIn } from "../../src/features/auth";
-import { colors } from "../../src/lib/theme/tokens";
-
-const schema = z.object({
-  email: z.string().email("Enter a valid email"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-});
-
-type FormData = z.infer<typeof schema>;
+import { useGoogleSignIn } from "../../src/features/auth";
+import { colors, fonts, cardShadow } from "../../src/lib/theme/tokens";
+import { Sticker } from "../../src/components/ui/sticker";
 
 export default function SignIn() {
   const [authError, setAuthError] = useState<string | null>(null);
-  const signIn = useSignIn();
-
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<FormData>({
-    resolver: zodResolver(schema),
-    defaultValues: { email: "", password: "" },
-  });
-
-  async function onSubmit(data: FormData) {
-    setAuthError(null);
-    signIn.mutate(
-      { email: data.email, password: data.password },
-      {
-        onError: (error) => {
-          setAuthError(error.message);
-        },
-      },
-    );
-  }
+  const google = useGoogleSignIn();
 
   return (
-    <KeyboardAvoidingView
-      className="flex-1 bg-paper"
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      <ScrollView
-        contentContainerStyle={{ flexGrow: 1 }}
-        keyboardShouldPersistTaps="handled"
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.paper }}>
+      {/* Decorative collage — non-interactive, behind wordmark */}
+      <View
+        pointerEvents="none"
+        style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
       >
-        <View className="flex-1 justify-center px-6 py-12">
-          <Text className="text-accent font-bold text-3xl text-center mb-1">
-            daemi
-          </Text>
-          <Text className="text-ink-3 text-center mb-10">
-            your shared scrapbook
-          </Text>
-
-          <View className="mb-4">
-            <Text className="text-ink-2 text-sm mb-1.5 font-medium">Email</Text>
-            <Controller
-              control={control}
-              name="email"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <TextInput
-                  className="bg-shade rounded-xl px-4 py-3.5 text-ink text-base"
-                  placeholder="you@example.com"
-                  placeholderTextColor={colors.ink3}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  autoComplete="email"
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                />
-              )}
-            />
-            {errors.email && (
-              <Text className="text-red-500 text-xs mt-1">
-                {errors.email.message}
-              </Text>
-            )}
-          </View>
-
-          <View className="mb-6">
-            <Text className="text-ink-2 text-sm mb-1.5 font-medium">
-              Password
-            </Text>
-            <Controller
-              control={control}
-              name="password"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <TextInput
-                  className="bg-shade rounded-xl px-4 py-3.5 text-ink text-base"
-                  placeholder="••••••"
-                  placeholderTextColor={colors.ink3}
-                  secureTextEntry
-                  autoComplete="password"
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                />
-              )}
-            />
-            {errors.password && (
-              <Text className="text-red-500 text-xs mt-1">
-                {errors.password.message}
-              </Text>
-            )}
-          </View>
-
-          <TouchableOpacity
-            className="bg-accent rounded-xl py-3.5 items-center"
-            onPress={handleSubmit(onSubmit)}
-            disabled={signIn.isPending}
+        {/* Photo tile — top-left, tilted slightly clockwise */}
+        <View
+          style={[
+            cardShadow,
+            {
+              position: "absolute",
+              top: Platform.OS === "ios" ? 72 : 52,
+              left: 28,
+              width: 110,
+              height: 126,
+              backgroundColor: colors.surface,
+              borderRadius: 6,
+              transform: [{ rotate: "-5deg" }],
+              padding: 8,
+            },
+          ]}
+        >
+          {/* Faux photo image area */}
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: colors.shade,
+              borderRadius: 3,
+              marginBottom: 8,
+            }}
+          />
+          {/* Caveat caption */}
+          <Text
+            style={{
+              fontFamily: fonts.hand,
+              fontSize: 13,
+              color: colors.ink3,
+              textAlign: "center",
+            }}
           >
-            {signIn.isPending ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text className="text-white font-semibold text-base">
-                Sign In
-              </Text>
-            )}
-          </TouchableOpacity>
+            golden hour
+          </Text>
+        </View>
 
-          {authError && (
-            <Text className="text-red-500 text-sm text-center mt-3">
-              {authError}
+        {/* Letter snippet — top-right, tilted counter-clockwise */}
+        <View
+          style={[
+            cardShadow,
+            {
+              position: "absolute",
+              top: Platform.OS === "ios" ? 88 : 68,
+              right: 24,
+              width: 118,
+              height: 108,
+              backgroundColor: colors.surface,
+              borderRadius: 6,
+              transform: [{ rotate: "6deg" }],
+              padding: 12,
+              paddingTop: 14,
+            },
+          ]}
+        >
+          {/* Ruled lines */}
+          {[0, 1, 2, 3].map((i) => (
+            <View
+              key={i}
+              style={{
+                height: 1,
+                backgroundColor: colors.line,
+                marginBottom: 13,
+              }}
+            />
+          ))}
+          {/* Caveat handwriting line */}
+          <Text
+            style={{
+              fontFamily: fonts.hand,
+              fontSize: 12,
+              color: colors.ink3,
+              position: "absolute",
+              top: 20,
+              left: 12,
+            }}
+          >
+            thinking of you...
+          </Text>
+        </View>
+
+        {/* Ticket stub — middle-right, barely tilted */}
+        <View
+          style={[
+            cardShadow,
+            {
+              position: "absolute",
+              top: Platform.OS === "ios" ? 230 : 210,
+              right: 36,
+              width: 90,
+              height: 44,
+              backgroundColor: colors.accentSoft,
+              borderRadius: 6,
+              transform: [{ rotate: "-3deg" }],
+              justifyContent: "center",
+              alignItems: "center",
+              paddingHorizontal: 10,
+            },
+          ]}
+        >
+          <Text
+            style={{
+              fontFamily: fonts.ui,
+              fontSize: 10,
+              color: colors.accent,
+              letterSpacing: 1.5,
+              textTransform: "uppercase",
+            }}
+          >
+            admit two
+          </Text>
+          <View
+            style={{
+              height: 1,
+              backgroundColor: colors.accent,
+              opacity: 0.25,
+              width: "100%",
+              marginTop: 4,
+            }}
+          />
+        </View>
+
+        {/* Small polaroid tile — lower-left */}
+        <View
+          style={[
+            cardShadow,
+            {
+              position: "absolute",
+              top: Platform.OS === "ios" ? 260 : 240,
+              left: 20,
+              width: 80,
+              height: 90,
+              backgroundColor: colors.surface,
+              borderRadius: 4,
+              transform: [{ rotate: "4deg" }],
+              padding: 6,
+              paddingBottom: 16,
+            },
+          ]}
+        >
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: colors.shade,
+              borderRadius: 2,
+            }}
+          />
+        </View>
+
+        {/* Stickers */}
+        <Sticker text="us" rotate={-8} top={Platform.OS === "ios" ? 195 : 175} left={68} />
+        <Sticker
+          text="est. 2024"
+          rotate={5}
+          top={Platform.OS === "ios" ? 345 : 325}
+          left={40}
+          color={colors.accentSoft}
+        />
+      </View>
+
+      {/* Wordmark + tagline — center of screen */}
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          paddingBottom: 180,
+        }}
+      >
+        <Text
+          style={{
+            fontFamily: fonts.display,
+            fontSize: 72,
+            color: colors.accent,
+            lineHeight: 76,
+            letterSpacing: -1,
+          }}
+        >
+          daemi
+        </Text>
+        <Text
+          style={{
+            fontFamily: fonts.ui,
+            fontSize: 16,
+            color: colors.ink3,
+            marginTop: 4,
+          }}
+        >
+          your shared scrapbook
+        </Text>
+      </View>
+
+      {/* Bottom tray — faked frosted panel */}
+      <View
+        style={[
+          cardShadow,
+          {
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            backgroundColor: "rgba(255,253,248,0.92)",
+            borderTopWidth: 1,
+            borderTopColor: colors.line,
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+            paddingHorizontal: 24,
+            paddingTop: 24,
+            paddingBottom: Platform.OS === "ios" ? 44 : 28,
+          },
+        ]}
+      >
+        {/* Google primary button */}
+        <TouchableOpacity
+          className="bg-accent rounded-xl py-3.5 items-center"
+          onPress={() =>
+            google.mutate(undefined, {
+              onError: (e) => setAuthError(e.message),
+            })
+          }
+          disabled={google.isPending}
+          activeOpacity={0.82}
+        >
+          {google.isPending ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text
+              style={{
+                fontFamily: fonts.ui,
+                fontSize: 16,
+                color: "#fff",
+                fontWeight: "600",
+              }}
+            >
+              Continue with Google
             </Text>
           )}
+        </TouchableOpacity>
 
-          <View className="flex-row justify-center mt-8">
-            <Text className="text-ink-3">Don't have an account? </Text>
-            <Link href="/(auth)/sign-up">
-              <Text className="text-accent font-medium">Sign Up</Text>
-            </Link>
-          </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        {/* Email secondary button */}
+        <TouchableOpacity
+          style={{
+            borderWidth: 1,
+            borderColor: colors.accent,
+            borderRadius: 12,
+            paddingVertical: 14,
+            alignItems: "center",
+            marginTop: 12,
+          }}
+          onPress={() => router.push("/(auth)/email")}
+          activeOpacity={0.7}
+        >
+          <Text
+            style={{
+              fontFamily: fonts.ui,
+              fontSize: 16,
+              color: colors.accent,
+            }}
+          >
+            Continue with email
+          </Text>
+        </TouchableOpacity>
+
+        {/* Error region */}
+        {authError && (
+          <Text
+            style={{
+              fontFamily: fonts.ui,
+              fontSize: 13,
+              color: colors.destructive,
+              textAlign: "center",
+              marginTop: 12,
+            }}
+          >
+            {authError}
+          </Text>
+        )}
+      </View>
+    </SafeAreaView>
   );
 }
