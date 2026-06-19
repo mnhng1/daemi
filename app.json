@@ -59,8 +59,9 @@
       ],
       [
         "@react-native-google-signin/google-signin",
-        { "iosUrlScheme": "com.googleusercontent.apps.PLACEHOLDER_REVERSED_CLIENT_ID" }
-      ]
+        { "iosUrlScheme": "com.googleusercontent.apps.329015383680-2p6ffqijt0r4u688e0vddu50hio0bu98" }
+      ],
+      "./plugins/with-google-modular-headers"
     ]
   }
 }
