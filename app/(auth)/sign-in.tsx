@@ -1,6 +1,7 @@
 import {
   View,
   Text,
+  Image,
   TouchableOpacity,
   ActivityIndicator,
   Platform,
@@ -13,12 +14,11 @@ import Animated, {
   FadeInDown,
   FadeInUp,
 } from "react-native-reanimated";
-import { Ionicons } from "@expo/vector-icons";
 import { useGoogleSignIn } from "../../src/features/auth";
 import { colors, fonts, cardShadow } from "../../src/lib/theme/tokens";
 import { Sticker } from "../../src/components/ui/sticker";
 
-// A soft, paper-friendly version of the card shadow for the floating bits.
+// A soft, paper-friendly shadow for the buttons.
 const softShadow = {
   shadowColor: "#46301c",
   shadowOffset: { width: 0, height: 3 },
@@ -27,23 +27,15 @@ const softShadow = {
   elevation: 2,
 } as const;
 
-// One small instax-style tile for the centre filler strip.
-function MiniTile({
-  rotate,
-  caption,
-  marginLeft = 0,
-}: {
-  rotate: number;
-  caption: string;
-  marginLeft?: number;
-}) {
+// One quiet instax-style tile for the centre strip — no captions, just paper.
+function MiniTile({ rotate, marginLeft = 0 }: { rotate: number; marginLeft?: number }) {
   return (
     <View
       style={[
         cardShadow,
         {
-          width: 60,
-          height: 72,
+          width: 58,
+          height: 70,
           marginLeft,
           backgroundColor: colors.surface,
           borderRadius: 4,
@@ -54,17 +46,6 @@ function MiniTile({
       ]}
     >
       <View style={{ flex: 1, backgroundColor: colors.shade, borderRadius: 2 }} />
-      <Text
-        style={{
-          fontFamily: fonts.hand,
-          fontSize: 11,
-          color: colors.ink3,
-          textAlign: "center",
-          marginTop: 2,
-        }}
-      >
-        {caption}
-      </Text>
     </View>
   );
 }
@@ -75,13 +56,13 @@ export default function SignIn() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.paper }}>
-      {/* Decorative collage — non-interactive, behind wordmark. Each piece
-          fades in on a small stagger so the scrapbook "assembles" itself. */}
+      {/* Decorative collage — non-interactive, behind the wordmark. Paper
+          objects, mostly wordless: the quiet, imperfect wabi-sabi feel. */}
       <View
         pointerEvents="none"
         style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
       >
-        {/* Photo tile — top-left, tilted slightly clockwise */}
+        {/* Photo tile — top-left */}
         <Animated.View
           entering={FadeIn.delay(150).duration(800)}
           style={[
@@ -96,32 +77,16 @@ export default function SignIn() {
               borderRadius: 6,
               transform: [{ rotate: "-5deg" }],
               padding: 8,
+              paddingBottom: 18,
             },
           ]}
         >
-          {/* Faux photo image area */}
           <View
-            style={{
-              flex: 1,
-              backgroundColor: colors.shade,
-              borderRadius: 3,
-              marginBottom: 8,
-            }}
+            style={{ flex: 1, backgroundColor: colors.shade, borderRadius: 3 }}
           />
-          {/* Caveat caption */}
-          <Text
-            style={{
-              fontFamily: fonts.hand,
-              fontSize: 13,
-              color: colors.ink3,
-              textAlign: "center",
-            }}
-          >
-            golden hour
-          </Text>
         </Animated.View>
 
-        {/* Letter snippet — top-right, tilted counter-clockwise */}
+        {/* Letter snippet — top-right */}
         <Animated.View
           entering={FadeIn.delay(280).duration(800)}
           style={[
@@ -135,38 +100,23 @@ export default function SignIn() {
               backgroundColor: colors.surface,
               borderRadius: 6,
               transform: [{ rotate: "6deg" }],
-              padding: 12,
-              paddingTop: 14,
+              padding: 14,
             },
           ]}
         >
-          {/* Ruled lines */}
-          {[0, 1, 2, 3].map((i) => (
+          {[0, 1, 2, 3, 4].map((i) => (
             <View
               key={i}
               style={{
                 height: 1,
                 backgroundColor: colors.line,
-                marginBottom: 13,
+                marginBottom: 14,
               }}
             />
           ))}
-          {/* Caveat handwriting line */}
-          <Text
-            style={{
-              fontFamily: fonts.hand,
-              fontSize: 12,
-              color: colors.ink3,
-              position: "absolute",
-              top: 20,
-              left: 12,
-            }}
-          >
-            thinking of you...
-          </Text>
         </Animated.View>
 
-        {/* Ticket stub — middle-right, barely tilted */}
+        {/* Ticket stub — middle-right */}
         <Animated.View
           entering={FadeIn.delay(410).duration(800)}
           style={[
@@ -175,35 +125,22 @@ export default function SignIn() {
               position: "absolute",
               top: Platform.OS === "ios" ? 230 : 210,
               right: 36,
-              width: 90,
-              height: 44,
+              width: 86,
+              height: 42,
               backgroundColor: colors.accentSoft,
               borderRadius: 6,
               transform: [{ rotate: "-3deg" }],
               justifyContent: "center",
-              alignItems: "center",
-              paddingHorizontal: 10,
+              paddingHorizontal: 12,
             },
           ]}
         >
-          <Text
-            style={{
-              fontFamily: fonts.ui,
-              fontSize: 10,
-              color: colors.accent,
-              letterSpacing: 1.5,
-              textTransform: "uppercase",
-            }}
-          >
-            admit two
-          </Text>
           <View
             style={{
               height: 1,
               backgroundColor: colors.accent,
-              opacity: 0.25,
+              opacity: 0.22,
               width: "100%",
-              marginTop: 4,
             }}
           />
         </Animated.View>
@@ -215,7 +152,7 @@ export default function SignIn() {
             cardShadow,
             {
               position: "absolute",
-              top: Platform.OS === "ios" ? 260 : 240,
+              top: Platform.OS === "ios" ? 262 : 242,
               left: 20,
               width: 80,
               height: 90,
@@ -228,35 +165,22 @@ export default function SignIn() {
           ]}
         >
           <View
-            style={{
-              flex: 1,
-              backgroundColor: colors.shade,
-              borderRadius: 2,
-            }}
+            style={{ flex: 1, backgroundColor: colors.shade, borderRadius: 2 }}
           />
         </Animated.View>
 
-        {/* Stickers */}
-        <Animated.View entering={FadeIn.delay(680).duration(700)}>
+        {/* A single small sticker, the one bit of warmth */}
+        <Animated.View entering={FadeIn.delay(700).duration(700)}>
           <Sticker
             text="us"
             rotate={-8}
-            top={Platform.OS === "ios" ? 195 : 175}
-            left={68}
-          />
-        </Animated.View>
-        <Animated.View entering={FadeIn.delay(760).duration(700)}>
-          <Sticker
-            text="est. 2024"
-            rotate={5}
-            top={Platform.OS === "ios" ? 345 : 325}
-            left={40}
-            color={colors.accentSoft}
+            top={Platform.OS === "ios" ? 200 : 180}
+            left={70}
           />
         </Animated.View>
       </View>
 
-      {/* Wordmark + tagline + centre filler */}
+      {/* Wordmark + quiet centre strip */}
       <View
         style={{
           flex: 1,
@@ -268,13 +192,15 @@ export default function SignIn() {
       >
         <Animated.Text
           entering={FadeInDown.delay(180).duration(900)}
+          numberOfLines={1}
           style={{
             fontFamily: fonts.display,
             fontSize: 72,
-            // Generous line height + vertical padding so Caveat's tall "i" dot
-            // and descenders aren't clipped by the text box.
+            // Room on all sides so Caveat's tall "i" dot and trailing glyph
+            // ink aren't clipped vertically or horizontally.
             lineHeight: 100,
             paddingTop: 6,
+            paddingHorizontal: 28,
             includeFontPadding: true,
             textAlign: "center",
             color: colors.accent,
@@ -282,45 +208,22 @@ export default function SignIn() {
         >
           daemi
         </Animated.Text>
-        <Animated.Text
-          entering={FadeIn.delay(560).duration(800)}
-          style={{
-            fontFamily: fonts.ui,
-            fontSize: 16,
-            color: colors.ink3,
-            marginTop: 2,
-          }}
-        >
-          your shared scrapbook
-        </Animated.Text>
 
-        {/* Centre filler — a little instax strip to ground the empty middle */}
+        {/* Centre filler — a wordless instax strip to settle the middle */}
         <Animated.View
-          entering={FadeInUp.delay(860).duration(800)}
-          style={{ marginTop: 34, alignItems: "center" }}
+          entering={FadeInUp.delay(820).duration(800)}
+          style={{ marginTop: 28, flexDirection: "row", alignItems: "center" }}
         >
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <MiniTile rotate={-7} caption="mar" />
-            <MiniTile rotate={4} caption="jul" marginLeft={-10} />
-            <MiniTile rotate={-3} caption="dec" marginLeft={-10} />
-          </View>
-          <Text
-            style={{
-              fontFamily: fonts.hand,
-              fontSize: 17,
-              color: colors.ink3,
-              marginTop: 16,
-            }}
-          >
-            a year of us, in one place
-          </Text>
+          <MiniTile rotate={-7} />
+          <MiniTile rotate={4} marginLeft={-10} />
+          <MiniTile rotate={-3} marginLeft={-10} />
         </Animated.View>
       </View>
 
-      {/* Bottom tray — faked frosted panel. Rises in last so the very first
-          thing you see is the scrapbook, not a wall of buttons. */}
+      {/* Bottom tray — rises in last so the scrapbook lands first, not the
+          buttons. */}
       <Animated.View
-        entering={FadeInUp.delay(1150).duration(750)}
+        entering={FadeInUp.delay(1100).duration(750)}
         style={[
           cardShadow,
           {
@@ -339,8 +242,7 @@ export default function SignIn() {
           },
         ]}
       >
-        {/* Google button — kept in Google's own light style (white surface,
-            neutral border, brand "G", system font) rather than our theme. */}
+        {/* Google — its own light style with the official 4-colour mark */}
         <TouchableOpacity
           style={[
             softShadow,
@@ -349,7 +251,7 @@ export default function SignIn() {
               borderWidth: 1,
               borderColor: "#dadce0",
               borderRadius: 12,
-              paddingVertical: 13,
+              paddingVertical: 14,
               flexDirection: "row",
               alignItems: "center",
               justifyContent: "center",
@@ -367,26 +269,19 @@ export default function SignIn() {
             <ActivityIndicator color="#3c4043" />
           ) : (
             <>
-              <Ionicons
-                name="logo-google"
-                size={20}
-                color="#4285F4"
-                style={{ marginRight: 12 }}
+              <Image
+                source={require("../../assets/google-g.png")}
+                style={{ width: 18, height: 18, marginRight: 12 }}
+                resizeMode="contain"
               />
-              <Text
-                style={{
-                  fontSize: 16,
-                  color: "#3c4043",
-                  fontWeight: "600",
-                }}
-              >
+              <Text style={{ fontSize: 16, fontWeight: "600", color: "#3c4043" }}>
                 Continue with Google
               </Text>
             </>
           )}
         </TouchableOpacity>
 
-        {/* Email secondary button */}
+        {/* Email — same type scale and weight as Google, just our outline */}
         <TouchableOpacity
           style={{
             borderWidth: 1,
@@ -399,22 +294,14 @@ export default function SignIn() {
           onPress={() => router.push("/(auth)/email")}
           activeOpacity={0.7}
         >
-          <Text
-            style={{
-              fontFamily: fonts.ui,
-              fontSize: 16,
-              color: colors.accent,
-            }}
-          >
+          <Text style={{ fontSize: 16, fontWeight: "600", color: colors.accent }}>
             Continue with email
           </Text>
         </TouchableOpacity>
 
-        {/* Error region */}
         {authError && (
           <Text
             style={{
-              fontFamily: fonts.ui,
               fontSize: 13,
               color: colors.destructive,
               textAlign: "center",
