@@ -5,50 +5,32 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Platform,
+  Dimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useState } from "react";
-import Animated, {
-  FadeIn,
-  FadeInDown,
-  FadeInUp,
-} from "react-native-reanimated";
+import Animated, { FadeIn, FadeInDown, FadeInUp } from "react-native-reanimated";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useGoogleSignIn } from "../../src/features/auth";
-import { colors, fonts, cardShadow } from "../../src/lib/theme/tokens";
-import { Sticker } from "../../src/components/ui/sticker";
+import { colors, fonts } from "../../src/lib/theme/tokens";
 
-// A soft, paper-friendly shadow for the buttons.
+// Muted sage for the small botanical accents (wordmark sprig + divider leaf).
+const sage = "#9caf88";
+
+// A soft, paper-friendly shadow for the buttons and the bottom tray.
 const softShadow = {
   shadowColor: "#46301c",
   shadowOffset: { width: 0, height: 3 },
-  shadowOpacity: 0.12,
-  shadowRadius: 6,
+  shadowOpacity: 0.1,
+  shadowRadius: 8,
   elevation: 2,
 } as const;
 
-// One quiet instax-style tile for the centre strip — no captions, just paper.
-function MiniTile({ rotate, marginLeft = 0 }: { rotate: number; marginLeft?: number }) {
-  return (
-    <View
-      style={[
-        cardShadow,
-        {
-          width: 58,
-          height: 70,
-          marginLeft,
-          backgroundColor: colors.surface,
-          borderRadius: 4,
-          transform: [{ rotate: `${rotate}deg` }],
-          padding: 5,
-          paddingBottom: 12,
-        },
-      ]}
-    >
-      <View style={{ flex: 1, backgroundColor: colors.shade, borderRadius: 2 }} />
-    </View>
-  );
-}
+const { width: SCREEN_W } = Dimensions.get("window");
+// Mascot keeps its native 590×362 aspect; sized to sit comfortably mid-screen.
+const MASCOT_W = Math.min(264, SCREEN_W * 0.66);
+const MASCOT_H = (MASCOT_W * 362) / 590;
 
 export default function SignIn() {
   const [authError, setAuthError] = useState<string | null>(null);
@@ -56,202 +38,91 @@ export default function SignIn() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.paper }}>
-      {/* Decorative collage — non-interactive, behind the wordmark. Paper
-          objects, mostly wordless: the quiet, imperfect wabi-sabi feel. */}
-      <View
-        pointerEvents="none"
-        style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
-      >
-        {/* Photo tile — top-left */}
-        <Animated.View
-          entering={FadeIn.delay(150).duration(800)}
-          style={[
-            cardShadow,
-            {
-              position: "absolute",
-              top: Platform.OS === "ios" ? 72 : 52,
-              left: 28,
-              width: 110,
-              height: 126,
-              backgroundColor: colors.surface,
-              borderRadius: 6,
-              transform: [{ rotate: "-5deg" }],
-              padding: 8,
-              paddingBottom: 18,
-            },
-          ]}
-        >
-          <View
-            style={{ flex: 1, backgroundColor: colors.shade, borderRadius: 3 }}
-          />
-        </Animated.View>
-
-        {/* Letter snippet — top-right */}
-        <Animated.View
-          entering={FadeIn.delay(280).duration(800)}
-          style={[
-            cardShadow,
-            {
-              position: "absolute",
-              top: Platform.OS === "ios" ? 88 : 68,
-              right: 24,
-              width: 118,
-              height: 108,
-              backgroundColor: colors.surface,
-              borderRadius: 6,
-              transform: [{ rotate: "6deg" }],
-              padding: 14,
-            },
-          ]}
-        >
-          {[0, 1, 2, 3, 4].map((i) => (
-            <View
-              key={i}
-              style={{
-                height: 1,
-                backgroundColor: colors.line,
-                marginBottom: 14,
-              }}
-            />
-          ))}
-        </Animated.View>
-
-        {/* Ticket stub — middle-right */}
-        <Animated.View
-          entering={FadeIn.delay(410).duration(800)}
-          style={[
-            cardShadow,
-            {
-              position: "absolute",
-              top: Platform.OS === "ios" ? 230 : 210,
-              right: 36,
-              width: 86,
-              height: 42,
-              backgroundColor: colors.accentSoft,
-              borderRadius: 6,
-              transform: [{ rotate: "-3deg" }],
-              justifyContent: "center",
-              paddingHorizontal: 12,
-            },
-          ]}
-        >
-          <View
-            style={{
-              height: 1,
-              backgroundColor: colors.accent,
-              opacity: 0.22,
-              width: "100%",
-            }}
-          />
-        </Animated.View>
-
-        {/* Small polaroid tile — lower-left */}
-        <Animated.View
-          entering={FadeIn.delay(540).duration(800)}
-          style={[
-            cardShadow,
-            {
-              position: "absolute",
-              top: Platform.OS === "ios" ? 262 : 242,
-              left: 20,
-              width: 80,
-              height: 90,
-              backgroundColor: colors.surface,
-              borderRadius: 4,
-              transform: [{ rotate: "4deg" }],
-              padding: 6,
-              paddingBottom: 16,
-            },
-          ]}
-        >
-          <View
-            style={{ flex: 1, backgroundColor: colors.shade, borderRadius: 2 }}
-          />
-        </Animated.View>
-
-        {/* A single small sticker, the one bit of warmth */}
-        <Animated.View entering={FadeIn.delay(700).duration(700)}>
-          <Sticker
-            text="us"
-            rotate={-8}
-            top={Platform.OS === "ios" ? 200 : 180}
-            left={70}
-          />
-        </Animated.View>
-      </View>
-
-      {/* Wordmark + quiet centre strip */}
+      {/* Centre column: wordmark, subtitle, then the reading mascot. Padded at
+          the bottom so the mascot settles just above the auth tray. */}
       <View
         style={{
           flex: 1,
-          justifyContent: "center",
           alignItems: "center",
           paddingHorizontal: 24,
-          paddingBottom: 120,
+          paddingTop: SCREEN_W * 0.16,
+          paddingBottom: 300,
         }}
       >
-        <Animated.Text
-          entering={FadeInDown.delay(180).duration(900)}
-          numberOfLines={1}
-          style={{
-            fontFamily: fonts.display,
-            fontSize: 72,
-            // Room on all sides so Caveat's tall "i" dot and trailing glyph
-            // ink aren't clipped vertically or horizontally.
-            lineHeight: 100,
-            paddingTop: 6,
-            paddingHorizontal: 28,
-            includeFontPadding: true,
-            textAlign: "center",
-            color: colors.accent,
-          }}
-        >
-          daemi
-        </Animated.Text>
+        {/* Wordmark — our Caveat hand, with a small sage sprig off the "i". */}
+        <Animated.View entering={FadeInDown.delay(150).duration(900)}>
+          <View>
+            <Text
+              numberOfLines={1}
+              style={{
+                fontFamily: fonts.display,
+                fontSize: 64,
+                lineHeight: 88,
+                paddingTop: 6,
+                paddingHorizontal: 16,
+                includeFontPadding: true,
+                textAlign: "center",
+                color: colors.accent,
+              }}
+            >
+              daemi
+            </Text>
+            <MaterialCommunityIcons
+              name="sprout"
+              size={26}
+              color={sage}
+              style={{
+                position: "absolute",
+                top: 8,
+                right: -2,
+                transform: [{ rotate: "18deg" }],
+              }}
+            />
+          </View>
+        </Animated.View>
 
-        {/* Centre filler — a wordless instax strip to settle the middle */}
+        {/* Reading mascot — cropped from the reference, feathered to the paper. */}
         <Animated.View
-          entering={FadeInUp.delay(820).duration(800)}
-          style={{ marginTop: 28, flexDirection: "row", alignItems: "center" }}
+          entering={FadeIn.delay(550).duration(1000)}
+          style={{ flex: 1, justifyContent: "center" }}
         >
-          <MiniTile rotate={-7} />
-          <MiniTile rotate={4} marginLeft={-10} />
-          <MiniTile rotate={-3} marginLeft={-10} />
+          <Image
+            source={require("../../assets/mascot-reading.png")}
+            style={{ width: MASCOT_W, height: MASCOT_H }}
+            resizeMode="contain"
+          />
         </Animated.View>
       </View>
 
-      {/* Bottom tray — rises in last so the scrapbook lands first, not the
-          buttons. */}
+      {/* Auth tray — rises in last, rounded white card flush to the bottom. */}
       <Animated.View
-        entering={FadeInUp.delay(1100).duration(750)}
+        entering={FadeInUp.delay(800).duration(800)}
         style={[
-          cardShadow,
+          softShadow,
           {
             position: "absolute",
             bottom: 0,
             left: 0,
             right: 0,
-            backgroundColor: "rgba(255,253,248,0.92)",
-            borderTopWidth: 1,
-            borderTopColor: colors.line,
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
+            backgroundColor: "#ffffff",
+            borderTopLeftRadius: 28,
+            borderTopRightRadius: 28,
             paddingHorizontal: 24,
-            paddingTop: 24,
-            paddingBottom: Platform.OS === "ios" ? 44 : 28,
+            paddingTop: 28,
+            paddingBottom: Platform.OS === "ios" ? 40 : 28,
           },
         ]}
       >
-        {/* Google — its own light style with the official 4-colour mark */}
+        {/* Google — white face, official 4-colour mark, neutral dark label. */}
         <TouchableOpacity
           style={[
             softShadow,
             {
               backgroundColor: "#ffffff",
               borderWidth: 1,
-              borderColor: "#dadce0",
-              borderRadius: 12,
-              paddingVertical: 14,
+              borderColor: "#e6e1d8",
+              borderRadius: 14,
+              paddingVertical: 16,
               flexDirection: "row",
               alignItems: "center",
               justifyContent: "center",
@@ -271,7 +142,7 @@ export default function SignIn() {
             <>
               <Image
                 source={require("../../assets/google-g.png")}
-                style={{ width: 18, height: 18, marginRight: 12 }}
+                style={{ width: 20, height: 20, marginRight: 12 }}
                 resizeMode="contain"
               />
               <Text style={{ fontSize: 16, fontWeight: "600", color: "#3c4043" }}>
@@ -281,19 +152,28 @@ export default function SignIn() {
           )}
         </TouchableOpacity>
 
-        {/* Email — same type scale and weight as Google, just our outline */}
+        {/* Email — our plum outline with an envelope mark. */}
         <TouchableOpacity
           style={{
-            borderWidth: 1,
+            backgroundColor: "#ffffff",
+            borderWidth: 1.5,
             borderColor: colors.accent,
-            borderRadius: 12,
-            paddingVertical: 14,
+            borderRadius: 14,
+            paddingVertical: 15,
+            flexDirection: "row",
             alignItems: "center",
-            marginTop: 12,
+            justifyContent: "center",
+            marginTop: 14,
           }}
           onPress={() => router.push("/(auth)/email")}
           activeOpacity={0.7}
         >
+          <MaterialCommunityIcons
+            name="email-outline"
+            size={20}
+            color={colors.accent}
+            style={{ marginRight: 12 }}
+          />
           <Text style={{ fontSize: 16, fontWeight: "600", color: colors.accent }}>
             Continue with email
           </Text>
@@ -311,6 +191,40 @@ export default function SignIn() {
             {authError}
           </Text>
         )}
+
+        {/* Sprig divider */}
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            marginTop: 22,
+            marginBottom: 14,
+          }}
+        >
+          <View style={{ flex: 1, height: 1, backgroundColor: colors.line }} />
+          <MaterialCommunityIcons
+            name="sprout"
+            size={18}
+            color={sage}
+            style={{ marginHorizontal: 14 }}
+          />
+          <View style={{ flex: 1, height: 1, backgroundColor: colors.line }} />
+        </View>
+
+        {/* Terms — quiet grey with plum links. */}
+        <Text
+          style={{
+            fontSize: 12.5,
+            lineHeight: 19,
+            textAlign: "center",
+            color: colors.ink3,
+          }}
+        >
+          By continuing, you agree to our{" "}
+          <Text style={{ color: colors.accent }}>Terms of Service</Text>
+          {"\n"}and acknowledge our{" "}
+          <Text style={{ color: colors.accent }}>Privacy Policy</Text>
+        </Text>
       </Animated.View>
     </SafeAreaView>
   );
