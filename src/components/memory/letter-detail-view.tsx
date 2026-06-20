@@ -32,6 +32,9 @@ interface Props {
 // Ruled-paper geometry — body line-height equals the ruling spacing so the
 // handwriting sits on the lines (mirrors the prototype's 30px repeating rule).
 const LINE_HEIGHT = 32;
+// Push the first text row's baseline down onto the first ruled line. Without
+// this the text floats above the lines (see letter-composer for the geometry).
+const BODY_PAD_TOP = Math.round(LINE_HEIGHT * 0.2);
 
 export function LetterDetailView({ memory }: Props) {
   const router = useRouter();
@@ -155,7 +158,7 @@ export function LetterDetailView({ memory }: Props) {
                   top: LINE_HEIGHT * (i + 1),
                   height: StyleSheet.hairlineWidth,
                   backgroundColor: colors.ink4,
-                  opacity: 0.5,
+                  opacity: 0.7,
                 }}
               />
             ))}
@@ -168,6 +171,7 @@ export function LetterDetailView({ memory }: Props) {
               color: colors.ink,
               fontSize: 21,
               lineHeight: LINE_HEIGHT,
+              paddingTop: BODY_PAD_TOP,
             }}
             accessibilityRole="text"
           >
