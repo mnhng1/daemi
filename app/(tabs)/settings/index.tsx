@@ -25,6 +25,8 @@ import {
 } from "../../../src/features/profile";
 import { queryClient } from "../../../src/lib/query/client";
 import { colors, fonts } from "../../../src/lib/theme/tokens";
+import { useAppearanceStore } from "../../../src/lib/theme/appearance-store";
+import type { Appearance } from "../../../src/lib/theme/palettes";
 
 function SectionTitle({ children }: { children: string }) {
   return (
@@ -72,8 +74,23 @@ export default function SettingsScreen() {
   const signOut = useSignOut();
   const updateProfile = useUpdateProfile();
 
+  const appearance = useAppearanceStore((s) => s.appearance);
+  const setAppearance = useAppearanceStore((s) => s.setAppearance);
+
   const coupleSpaceId = membership?.couple_spaces?.id;
   const space = membership?.couple_spaces;
+
+  function chooseAppearance(a: Appearance) {
+    if (a === appearance) return;
+    Alert.alert(
+      "Switch appearance?",
+      "The app will reload to apply the new look.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Switch", onPress: () => setAppearance(a) },
+      ]
+    );
+  }
 
   const { data: avatarUrl } = useAvatarUrl(coupleSpaceId, currentUser?.avatar_url);
 
@@ -219,6 +236,44 @@ export default function SettingsScreen() {
         <InfoRow label="Space" value={space?.name ?? "Untitled"} />
         {dayCount != null && <InfoRow label="Day" value={String(dayCount)} />}
         <InfoRow label="Invite code" value={space?.invite_code ?? "—"} />
+
+        {/* ── Appearance ──────────────────────────────────────── */}
+        <SectionTitle>Appearance</SectionTitle>
+        <View style={{ flexDirection: "row", gap: 10 }}>
+          {(["scrapbook", "monochrome"] as Appearance[]).map((a) => {
+            const active = appearance === a;
+            return (
+              <Pressable
+                key={a}
+                onPress={() => chooseAppearance(a)}
+                accessibilityRole="button"
+                accessibilityLabel={`Use ${a} appearance`}
+                style={{
+                  flex: 1,
+                  backgroundColor: active ? colors.accent : colors.surface,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: active ? colors.accent : colors.line,
+                  paddingVertical: 16,
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                <MaterialCommunityIcons
+                  name={a === "scrapbook" ? "notebook-outline" : "contrast-box"}
+                  size={22}
+                  color={active ? colors.surface : colors.ink2}
+                />
+                <Text style={{ fontSize: 14, fontWeight: "600", color: active ? colors.surface : colors.ink }}>
+                  {a === "scrapbook" ? "Scrapbook" : "Monochrome"}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        <Text style={{ fontSize: 12, color: colors.ink3, marginTop: 8 }}>
+          Switching reloads the app. Monochrome is a design preview of the same content.
+        </Text>
 
         {/* ── Account ─────────────────────────────────────────── */}
         <SectionTitle>Account</SectionTitle>

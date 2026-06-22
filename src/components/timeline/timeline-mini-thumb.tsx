@@ -3,7 +3,9 @@ import { Pressable, View, Text, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { MemoryWithAuthor } from "../../types/database";
 import { useMediaUrl } from "../../features/media";
-import { colors, cardShadow } from "../../lib/theme/tokens";
+import { colors, cardShadow, getAppearance } from "../../lib/theme/tokens";
+
+const mono = getAppearance() === "monochrome";
 
 interface Props {
   memory: MemoryWithAuthor;
@@ -24,12 +26,12 @@ export function TimelineMiniThumb({ memory }: Props) {
         accessibilityRole="button"
         accessibilityLabel={memory.title ?? "Letter memory"}
         style={[
-          cardShadow,
+          mono ? undefined : cardShadow,
           {
             width: 50,
             height: 60,
             borderRadius: 6,
-            backgroundColor: colors.letterPaper,
+            backgroundColor: mono ? colors.surface2 : colors.letterPaper,
             borderWidth: 1,
             borderColor: colors.line,
             padding: 5,
@@ -55,7 +57,7 @@ export function TimelineMiniThumb({ memory }: Props) {
         accessibilityRole="button"
         accessibilityLabel={memory.title ?? "Ticket memory"}
         style={[
-          cardShadow,
+          mono ? undefined : cardShadow,
           {
             width: 70,
             height: 38,
@@ -81,7 +83,7 @@ export function TimelineMiniThumb({ memory }: Props) {
       accessibilityRole="button"
       accessibilityLabel={memory.title ?? (memory.type === "video" ? "Video memory" : "Photo memory")}
       style={[
-        cardShadow,
+        mono ? undefined : cardShadow,
         {
           width: 60,
           height: 60,

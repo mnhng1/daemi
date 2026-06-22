@@ -1,3 +1,23 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Scrapbook (default) palette for the NativeWind className layer. The monochrome
+   override is applied at the app root via vars() (src/lib/theme/css-vars.ts) and
+   mirrors src/lib/theme/palettes.ts. `--accent-rgb` is an RGB triplet so opacity
+   modifiers (e.g. bg-accent/50) work. */
+:root {
+  --paper: #faf6ef;
+  --ink: #2a2520;
+  --ink-2: #5a4f44;
+  --ink-3: #9a8e80;
+  --ink-4: #d6cbb9;
+  --surface: #fffdf8;
+  --surface-2: #efe7d5;
+  --letter-paper: #fdf8ea;
+  --destructive: #dc2626;
+  --shade: #f1ead9;
+  --accent-rgb: 140 90 124;
+  --accent-soft: #ead4df;
+  --highlight: #f5e6b0;
+}

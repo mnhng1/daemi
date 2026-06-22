@@ -8,10 +8,11 @@ import {
 } from "../../features/memories";
 import { MemoryTypeFilter } from "../../features/memories/types";
 import { formatMonthLabel } from "../../lib/utils/date";
-import { colors, fonts } from "../../lib/theme/tokens";
+import { colors, fonts, getAppearance } from "../../lib/theme/tokens";
 import { TimelineNode } from "./timeline-node";
 import { TimelineMonthMarker } from "./timeline-month-marker";
 import { TimelineMiniThumb } from "./timeline-mini-thumb";
+import { MonoGallery, type GallerySection } from "./timeline-gallery";
 
 interface Props {
   memories: MemoryWithAuthor[];
@@ -57,6 +58,23 @@ export function TimelineMonthView({ memories, anniversaryMonth, typeFilter }: Pr
       };
     });
   }, [memories, anniversaryMonth, typeFilter]);
+
+  // Monochrome: a flat photo-grid gallery grouped by month, in place of the
+  // scrapbook spine / week-bucket / volume layout.
+  const mono = getAppearance() === "monochrome";
+  const gallerySections = useMemo<GallerySection[]>(() => {
+    if (!mono) return [];
+    const filtered =
+      typeFilter === "all" ? memories : memories.filter((m) => m.type === typeFilter);
+    return groupByMonth(filtered).map(({ monthKey, year, month, items }) => ({
+      key: monthKey,
+      label: formatMonthLabel(year, month),
+      sub: `${items.length} ${items.length === 1 ? "memory" : "memories"}`,
+      items,
+    }));
+  }, [mono, memories, typeFilter]);
+
+  if (mono) return <MonoGallery sections={gallerySections} />;
 
   return (
     <SectionList<WeekBucket, MonthSection>

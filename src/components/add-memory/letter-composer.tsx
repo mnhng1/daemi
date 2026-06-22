@@ -12,7 +12,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { colors } from "../../lib/theme/tokens";
+import { colors, getAppearance } from "../../lib/theme/tokens";
+
+const mono = getAppearance() === "monochrome";
 import { wordCount } from "../../lib/utils/text";
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
@@ -153,7 +155,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   root: {
     flex: 1,
-    backgroundColor: colors.letterPaper,
+    backgroundColor: mono ? colors.surface : colors.letterPaper,
   },
   header: {
     flexDirection: "row",
@@ -170,7 +172,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: Math.round(19 * SCALE),
-    fontFamily: "CormorantInfant_600SemiBold",
+    fontFamily: mono ? undefined : "CormorantInfant_600SemiBold",
     color: colors.ink,
   },
   sendBtn: {
@@ -197,17 +199,17 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 0,
     bottom: 0,
-    width: StyleSheet.hairlineWidth * 2,
-    backgroundColor: colors.accent + "35",
+    width: mono ? 0 : StyleSheet.hairlineWidth * 2,
+    backgroundColor: mono ? "transparent" : colors.accent + "35",
   },
   ruledLine: {
     position: "absolute",
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.ink4 + "88",
+    height: mono ? 0 : StyleSheet.hairlineWidth,
+    backgroundColor: mono ? "transparent" : colors.ink4 + "88",
   },
   input: {
     flex: 1,
-    fontFamily: "CormorantInfant_400Regular_Italic",
+    fontFamily: mono ? undefined : "CormorantInfant_400Regular_Italic",
     color: colors.ink,
   },
   footer: {
@@ -218,6 +220,6 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: Math.round(13 * SCALE),
     color: colors.ink3,
-    fontFamily: "CormorantInfant_400Regular",
+    fontFamily: mono ? undefined : "CormorantInfant_400Regular",
   },
 });

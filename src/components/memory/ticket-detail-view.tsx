@@ -11,13 +11,14 @@ import { useCollections } from "../../features/collections/use-collections";
 import { CollectionPickerSheet } from "../collections/collection-picker-sheet";
 import { formatTimelineDate } from "../../lib/utils/date";
 import { errorMessage, logError } from "../../lib/utils/log";
-import { colors } from "../../lib/theme/tokens";
+import { colors, getAppearance } from "../../lib/theme/tokens";
 
 interface Props {
   memory: MemoryWithAuthor;
 }
 
 export function TicketDetailView({ memory }: Props) {
+  const mono = getAppearance() === "monochrome";
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data: stubPhotoUrl } = useMediaUrl(memory);
@@ -131,22 +132,24 @@ export function TicketDetailView({ memory }: Props) {
           </View>
         </View>
 
-        {/* Big ticket card — slight rotation for personality */}
-        <View style={{ marginTop: 24, transform: [{ rotate: "-1deg" }] }}>
+        {/* Big ticket card — slight rotation for personality (scrapbook only) */}
+        <View style={{ marginTop: 24, transform: [{ rotate: mono ? "0deg" : "-1deg" }] }}>
           <View
             style={{
               flexDirection: "row",
               borderRadius: 14,
               overflow: "hidden",
               backgroundColor: colors.surface,
-              borderWidth: 1,
+              borderWidth: mono ? 0 : 1,
               borderColor: colors.ink4,
               minHeight: 110,
-              shadowColor: colors.ink,
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.08,
-              shadowRadius: 6,
-              elevation: 3,
+              ...(mono ? {} : {
+                shadowColor: colors.ink,
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.08,
+                shadowRadius: 6,
+                elevation: 3,
+              }),
             }}
           >
             {/* Left stub-photo panel */}
@@ -163,46 +166,48 @@ export function TicketDetailView({ memory }: Props) {
               )}
             </View>
 
-            {/* Perforation */}
-            <View style={{ position: "relative", width: 0 }}>
-              <View
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  bottom: 0,
-                  left: -0.5,
-                  borderLeftWidth: 1.5,
-                  borderLeftColor: colors.ink4,
-                  borderStyle: "dashed",
-                }}
-              />
-              <View
-                style={{
-                  position: "absolute",
-                  top: -7,
-                  left: -7,
-                  width: 14,
-                  height: 14,
-                  borderRadius: 7,
-                  backgroundColor: colors.paper,
-                  borderWidth: 1,
-                  borderColor: colors.ink4,
-                }}
-              />
-              <View
-                style={{
-                  position: "absolute",
-                  bottom: -7,
-                  left: -7,
-                  width: 14,
-                  height: 14,
-                  borderRadius: 7,
-                  backgroundColor: colors.paper,
-                  borderWidth: 1,
-                  borderColor: colors.ink4,
-                }}
-              />
-            </View>
+            {/* Perforation — scrapbook only */}
+            {!mono && (
+              <View style={{ position: "relative", width: 0 }}>
+                <View
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    bottom: 0,
+                    left: -0.5,
+                    borderLeftWidth: 1.5,
+                    borderLeftColor: colors.ink4,
+                    borderStyle: "dashed",
+                  }}
+                />
+                <View
+                  style={{
+                    position: "absolute",
+                    top: -7,
+                    left: -7,
+                    width: 14,
+                    height: 14,
+                    borderRadius: 7,
+                    backgroundColor: colors.paper,
+                    borderWidth: 1,
+                    borderColor: colors.ink4,
+                  }}
+                />
+                <View
+                  style={{
+                    position: "absolute",
+                    bottom: -7,
+                    left: -7,
+                    width: 14,
+                    height: 14,
+                    borderRadius: 7,
+                    backgroundColor: colors.paper,
+                    borderWidth: 1,
+                    borderColor: colors.ink4,
+                  }}
+                />
+              </View>
+            )}
 
             {/* Right content panel */}
             <View
@@ -266,26 +271,28 @@ export function TicketDetailView({ memory }: Props) {
           </View>
         )}
 
-        {/* Note — sticky-note style (body field owns the note per I-F decision) */}
+        {/* Note — sticky-note style (scrapbook) / plain text (mono) */}
         {memory.body ? (
           <View
             style={{
               marginTop: 16,
               padding: 14,
               borderRadius: 6,
-              backgroundColor: colors.highlight,
-              transform: [{ rotate: "0.6deg" }],
-              shadowColor: colors.ink,
-              shadowOffset: { width: 0, height: 3 },
-              shadowOpacity: 0.12,
-              shadowRadius: 8,
-              elevation: 2,
+              backgroundColor: mono ? colors.surface : colors.highlight,
+              transform: [{ rotate: mono ? "0deg" : "0.6deg" }],
+              ...(mono ? {} : {
+                shadowColor: colors.ink,
+                shadowOffset: { width: 0, height: 3 },
+                shadowOpacity: 0.12,
+                shadowRadius: 8,
+                elevation: 2,
+              }),
             }}
           >
             <Text
               style={{
-                fontFamily: "CormorantInfant_400Regular_Italic",
-                fontStyle: "italic",
+                fontFamily: mono ? undefined : "CormorantInfant_400Regular_Italic",
+                fontStyle: mono ? undefined : "italic",
                 fontSize: 17,
                 color: colors.ink,
                 lineHeight: 26,

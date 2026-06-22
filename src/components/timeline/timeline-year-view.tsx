@@ -8,9 +8,10 @@ import {
   MonthScaffoldRow,
 } from "../../features/memories";
 import { MemoryTypeFilter } from "../../features/memories/types";
-import { colors, fonts, memoryTypeColors } from "../../lib/theme/tokens";
+import { colors, fonts, memoryTypeColors, getAppearance } from "../../lib/theme/tokens";
 import { TimelineNode } from "./timeline-node";
 import { TimelineSpineLine } from "./timeline-spine-line";
+import { MonoGallery, type GallerySection } from "./timeline-gallery";
 
 interface Props {
   memories: MemoryWithAuthor[];
@@ -50,6 +51,32 @@ export function TimelineYearView({ memories, anniversaryMonth, typeFilter, onZoo
       typeFilter === "all" ? items.length : items.filter((m) => m.type === typeFilter).length;
     return Math.max(1, ...rows.map((r) => metric(r.items)));
   }, [rows, typeFilter]);
+
+  // Monochrome: a flat photo-grid gallery grouped by year, in place of the
+  // scrapbook spine / volume-bar layout.
+  const mono = getAppearance() === "monochrome";
+  const gallerySections = useMemo<GallerySection[]>(() => {
+    if (!mono) return [];
+    const filtered =
+      typeFilter === "all" ? memories : memories.filter((m) => m.type === typeFilter);
+    const byYear = new Map<number, MemoryWithAuthor[]>();
+    for (const m of filtered) {
+      const y = new Date(m.date_happened + "T00:00:00").getFullYear();
+      const bucket = byYear.get(y);
+      if (bucket) bucket.push(m);
+      else byYear.set(y, [m]);
+    }
+    return Array.from(byYear.entries())
+      .sort((a, b) => b[0] - a[0])
+      .map(([year, items]) => ({
+        key: String(year),
+        label: String(year),
+        sub: `${items.length} ${items.length === 1 ? "memory" : "memories"}`,
+        items,
+      }));
+  }, [mono, memories, typeFilter]);
+
+  if (mono) return <MonoGallery sections={gallerySections} />;
 
   return (
     <ScrollView

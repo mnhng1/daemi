@@ -14,7 +14,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { colors } from "../../lib/theme/tokens";
+import { colors, getAppearance } from "../../lib/theme/tokens";
+
+const mono = getAppearance() === "monochrome";
 import { formatTimelineDate } from "../../lib/utils/date";
 import { TagInput, type TagInputHandle } from "./tag-input";
 import { LocationPicker } from "./location-picker";
@@ -301,7 +303,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 19,
-    fontFamily: "CormorantInfant_600SemiBold",
+    fontFamily: mono ? undefined : "CormorantInfant_600SemiBold",
     color: colors.ink,
   },
   saveBtn: {
@@ -411,7 +413,7 @@ const styles = StyleSheet.create({
     paddingTop: 14,
   },
   noteInput: {
-    fontFamily: "CormorantInfant_400Regular_Italic",
+    fontFamily: mono ? undefined : "CormorantInfant_400Regular_Italic",
     fontSize: 17,
   },
   errorText: {
