@@ -23,7 +23,7 @@ import { MetaPill } from "../ui/meta-pill";
 import { formatLetterDate } from "../../lib/utils/date";
 import { wordCount } from "../../lib/utils/text";
 import { errorMessage, logError } from "../../lib/utils/log";
-import { colors, fonts } from "../../lib/theme/tokens";
+import { colors, fonts, getAppearance } from "../../lib/theme/tokens";
 
 interface Props {
   memory: MemoryWithAuthor;
@@ -37,6 +37,7 @@ const LINE_HEIGHT = 32;
 const BODY_PAD_TOP = Math.round(LINE_HEIGHT * 0.2);
 
 export function LetterDetailView({ memory }: Props) {
+  const mono = getAppearance() === "monochrome";
   const router = useRouter();
   const queryClient = useQueryClient();
   const { session } = useSession();
@@ -104,7 +105,7 @@ export function LetterDetailView({ memory }: Props) {
   const lineCount = Math.ceil(bodyHeight / LINE_HEIGHT) + 2;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.letterPaper }} edges={["top", "bottom"]}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: mono ? colors.paper : colors.letterPaper }} edges={["top", "bottom"]}>
       {/* Header — back · centered date + author · "…" menu (prototype DetailChrome) */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -143,35 +144,46 @@ export function LetterDetailView({ memory }: Props) {
       </View>
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 22, paddingTop: 20, paddingBottom: 32 }}>
-        {memory.title && <Text style={styles.title}>{memory.title}</Text>}
+        {memory.title && (
+          <Text
+            style={[
+              styles.title,
+              mono && { fontFamily: undefined, fontSize: 22, fontWeight: "700" as const },
+            ]}
+          >
+            {memory.title}
+          </Text>
+        )}
 
         {/* Ruled letter body — handwriting sitting on reference lines */}
         <View style={{ position: "relative" }}>
-          <View style={StyleSheet.absoluteFill} pointerEvents="none">
-            {Array.from({ length: lineCount }).map((_, i) => (
-              <View
-                key={i}
-                style={{
-                  position: "absolute",
-                  left: 0,
-                  right: 0,
-                  top: LINE_HEIGHT * (i + 1),
-                  height: StyleSheet.hairlineWidth,
-                  backgroundColor: colors.ink4,
-                  opacity: 0.7,
-                }}
-              />
-            ))}
-          </View>
+          {!mono && (
+            <View style={StyleSheet.absoluteFill} pointerEvents="none">
+              {Array.from({ length: lineCount }).map((_, i) => (
+                <View
+                  key={i}
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    right: 0,
+                    top: LINE_HEIGHT * (i + 1),
+                    height: StyleSheet.hairlineWidth,
+                    backgroundColor: colors.ink4,
+                    opacity: 0.7,
+                  }}
+                />
+              ))}
+            </View>
+          )}
 
           <Text
             onLayout={onBodyLayout}
             style={{
-              fontFamily: fonts.hand,
+              fontFamily: mono ? undefined : fonts.hand,
               color: colors.ink,
-              fontSize: 21,
-              lineHeight: LINE_HEIGHT,
-              paddingTop: BODY_PAD_TOP,
+              fontSize: mono ? 17 : 21,
+              lineHeight: mono ? 26 : LINE_HEIGHT,
+              paddingTop: mono ? 0 : BODY_PAD_TOP,
             }}
             accessibilityRole="text"
           >
@@ -232,7 +244,7 @@ export function LetterDetailView({ memory }: Props) {
             <Ionicons
               name={hasReacted ? "heart" : "heart-outline"}
               size={22}
-              color={colors.accent}
+              color={mono ? colors.ink2 : colors.accent}
             />
           </Pressable>
         </View>

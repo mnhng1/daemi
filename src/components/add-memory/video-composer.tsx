@@ -17,7 +17,9 @@ import * as ImagePicker from "expo-image-picker";
 import * as VideoThumbnails from "expo-video-thumbnails";
 import { File as EXFile } from "expo-file-system";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { colors } from "../../lib/theme/tokens";
+import { colors, getAppearance } from "../../lib/theme/tokens";
+
+const mono = getAppearance() === "monochrome";
 import { formatTimelineDate } from "../../lib/utils/date";
 import { TagInput, type TagInputHandle } from "./tag-input";
 import { LocationPicker } from "./location-picker";
@@ -381,7 +383,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 19,
-    fontFamily: "CormorantInfant_600SemiBold",
+    fontFamily: mono ? undefined : "CormorantInfant_600SemiBold",
     color: colors.ink,
   },
   saveBtn: {

@@ -1,7 +1,9 @@
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { colors, fonts } from "../../lib/theme/tokens";
+import { colors, fonts, getAppearance } from "../../lib/theme/tokens";
+
+const mono = getAppearance() === "monochrome";
 
 // Mirrors the prototype BottomNav (docs/prototype/src/02-ui-primitives.js):
 // four labelled tabs with a raised accent "+" FAB in the dead centre.
@@ -58,7 +60,20 @@ export function BottomTabBar({ state, navigation }: TabBarProps) {
                   onPress={onPress}
                   accessibilityRole="button"
                   accessibilityLabel="Add a memory"
-                  style={styles.fab}
+                  style={
+                    mono
+                      ? [
+                          styles.fab,
+                          {
+                            shadowColor: "transparent",
+                            shadowOffset: { width: 0, height: 0 },
+                            shadowOpacity: 0,
+                            shadowRadius: 0,
+                            elevation: 0,
+                          },
+                        ]
+                      : styles.fab
+                  }
                 >
                   <MaterialCommunityIcons name="plus" size={26} color="#fff" />
                 </Pressable>

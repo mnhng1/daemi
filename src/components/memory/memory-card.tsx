@@ -17,6 +17,9 @@ import { LetterMemoryCard } from "./letter-memory-card";
 import { VideoMemoryCard } from "./video-memory-card";
 import { TicketMemoryCard } from "./ticket-memory-card";
 import { QueuedMemoryCard } from "./queued-memory-card";
+import { getAppearance } from "../../lib/theme/tokens";
+
+const mono = getAppearance() === "monochrome";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -38,9 +41,9 @@ function MemoryCardInner({ memory, index, rotation = 0 }: InnerProps) {
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
 
-  // Scrapbook tilt (prototype tilt()) baked into the press transform.
+  // Scrapbook tilt baked into the press transform. Mono: force rotation to 0 (flat feed).
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotation}deg` }, { scale: scale.value }],
+    transform: [{ rotate: mono ? "0deg" : `${rotation}deg` }, { scale: scale.value }],
     opacity: opacity.value,
   }));
 

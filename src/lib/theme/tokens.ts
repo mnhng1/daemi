@@ -1,47 +1,86 @@
+// Design tokens — now a REACTIVE view over the active appearance palette.
+// Public surface (`colors` / `memoryTypeColors` / `fonts` / `cardShadow`) is
+// unchanged, so existing importers keep working; the values they read just track
+// whichever palette is active (see palettes.ts and the appearance store).
+//
+// How reactivity works: each exported object keeps a STABLE reference, but its
+// property reads delegate to PALETTES[active]. Components that read a token
+// inline during render (e.g. style={{ color: colors.ink }}) pick up the new value
+// on their next render — the app remounts the route tree on toggle so that
+// happens everywhere at once. Tokens used inside a module-scope StyleSheet.create
+// are snapshotted at import and must instead be read dynamically (those few files
+// are converted to do so).
+
 import type { ViewStyle } from "react-native";
+import * as SecureStore from "expo-secure-store";
+import {
+  PALETTES,
+  type Appearance,
+  type ColorTokens,
+  type FontTokens,
+  type MemoryTypeColors,
+} from "./palettes";
 
-export const colors = {
-  ink: "#2a2520",
-  ink2: "#5a4f44",
-  ink3: "#9a8e80",
-  ink4: "#d6cbb9",
-  surface: "#fffdf8",
-  surface2: "#efe7d5",
-  letterPaper: "#fdf8ea",
-  destructive: "#DC2626",
-  paper: "#faf6ef",
-  shade: "#f1ead9",
-  accent: "#8c5a7c",
-  accentSoft: "#ead4df",
-  highlight: "#f5e6b0",
-  line: "rgba(44,38,32,0.13)",
-  accentText: "#74506a",
-} as const;
+export const APPEARANCE_KEY = "daemi.appearance";
 
-// Per-memory-type colors — single source of truth shared by the year-view
-// density bar segments AND the filter chips (which act as the color legend).
-// letter ≈ prototype `color-mix(in srgb, var(--accent) 40%, var(--ink4))`.
-export const memoryTypeColors: Record<"photo" | "video" | "letter" | "ticket", string> = {
-  photo: colors.ink3, // warm grey-brown
-  video: "#5f8a84", // muted teal — the one cool tone, so it reads distinctly from photo
-  letter: "#b89aae", // mauve
-  ticket: colors.accent, // plum
-};
+// Read the persisted appearance SYNCHRONOUSLY at module init, before any screen
+// module evaluates its StyleSheet.create. That way module-scope styles snapshot
+// the correct palette at boot and no per-file conversion is needed; switching
+// appearance persists + reloads the bundle so everything re-evaluates cleanly.
+function readBootAppearance(): Appearance {
+  try {
+    return SecureStore.getItem(APPEARANCE_KEY) === "monochrome" ? "monochrome" : "scrapbook";
+  } catch {
+    return "scrapbook";
+  }
+}
 
-// Font families — mirrors the prototype `hand` theme (09-app-shell.js:19):
-// head "Caveat" (cursive display), ui "Patrick Hand". Loaded in app/_layout.tsx.
-export const fonts = {
-  display: "Caveat_700Bold", // headings: title, dates, month markers, today, empty heading
-  displayRegular: "Caveat_400Regular",
-  ui: "PatrickHand_400Regular", // chips, day-of-week, counts, zoom labels, ghost text, subtitle
-  hand: "Caveat_400Regular", // handwriting — mirrors prototype `--font-hand` (letter body, captions)
-  letter: "CormorantInfant_400Regular_Italic",
-} as const;
+let _appearance: Appearance = readBootAppearance();
+const listeners = new Set<() => void>();
 
-export const cardShadow: ViewStyle = {
-  shadowColor: "#46301c",
-  shadowOffset: { width: 0, height: 5 },
-  shadowOpacity: 0.2,
-  shadowRadius: 8,
-  elevation: 3,
-};
+export function getAppearance(): Appearance {
+  return _appearance;
+}
+
+/** Swap the active palette. Call before triggering the remount. */
+export function setActiveAppearance(a: Appearance): void {
+  if (a === _appearance) return;
+  _appearance = a;
+  listeners.forEach((l) => l());
+}
+
+export function subscribeAppearance(l: () => void): () => void {
+  listeners.add(l);
+  return () => listeners.delete(l);
+}
+
+// Build a stable object whose enumerable property reads delegate to the active
+// palette. Spreading / Object.keys work (descriptors are enumerable).
+function reactive<T extends object>(pick: (p: Appearance) => T): T {
+  const keys = Object.keys(pick("scrapbook") as Record<string, unknown>);
+  const obj: Record<string, unknown> = {};
+  for (const k of keys) {
+    Object.defineProperty(obj, k, {
+      enumerable: true,
+      get: () => (pick(_appearance) as Record<string, unknown>)[k],
+    });
+  }
+  return obj as unknown as T;
+}
+
+export const colors: ColorTokens = reactive((a) => PALETTES[a].colors);
+export const memoryTypeColors: MemoryTypeColors = reactive((a) => PALETTES[a].memoryTypeColors);
+export const fonts: FontTokens = reactive((a) => PALETTES[a].fonts);
+
+// cardShadow is spread (`...cardShadow`) into styles, so it must enumerate the
+// ACTIVE palette's keys. In monochrome the palette is `{}`, yielding a flat card.
+export const cardShadow: ViewStyle = new Proxy({} as ViewStyle, {
+  get: (_t, p: string | symbol) => (PALETTES[_appearance].cardShadow as Record<string | symbol, unknown>)[p],
+  has: (_t, p) => p in PALETTES[_appearance].cardShadow,
+  ownKeys: () => Reflect.ownKeys(PALETTES[_appearance].cardShadow),
+  getOwnPropertyDescriptor: (_t, p) => {
+    const src = PALETTES[_appearance].cardShadow as Record<string | symbol, unknown>;
+    if (!(p in src)) return undefined;
+    return { enumerable: true, configurable: true, value: src[p] };
+  },
+});

@@ -1,5 +1,6 @@
 import "../global.css";
 import { useEffect } from "react";
+import { View } from "react-native";
 import { Slot } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -16,6 +17,8 @@ import { Caveat_400Regular, Caveat_700Bold } from "@expo-google-fonts/caveat";
 import { PatrickHand_400Regular } from "@expo-google-fonts/patrick-hand";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { queryClient } from "../src/lib/query/client";
+import { getAppearance } from "../src/lib/theme/tokens";
+import { monochromeVars } from "../src/lib/theme/css-vars";
 import { SessionProvider } from "../src/features/auth";
 import { startQueueProcessor, setOnUploadComplete } from "../src/features/queue";
 import { useCurrentCoupleSpace } from "../src/features/couple-space";
@@ -53,6 +56,14 @@ export default function RootLayout() {
     ...MaterialCommunityIcons.font,
   });
 
+  // Appearance (Scrapbook ↔ Monochrome) is read synchronously at boot by
+  // tokens.ts. Read it ONCE here (not via the reactive store): a toggle persists +
+  // fully reloads the bundle, so this re-evaluates at the next boot. Subscribing to
+  // the store would re-render RootLayout on `set()` *before* the reload, flipping the
+  // wrapper between plain/vars() and remounting <Slot/> mid-navigation — which throws
+  // "Couldn't find a navigation context". Static read = wrapper mounts once, no remount.
+  const monoVars = getAppearance() === "monochrome" ? monochromeVars : null;
+
   useEffect(() => {
     if (fontsLoaded) {
       SplashScreen.hideAsync();
@@ -70,7 +81,9 @@ export default function RootLayout() {
         <GestureHandlerRootView style={{ flex: 1 }}>
           <SafeAreaProvider>
             <StatusBar style="dark" />
-            <Slot />
+            <View style={[{ flex: 1 }, monoVars]}>
+              <Slot />
+            </View>
           </SafeAreaProvider>
         </GestureHandlerRootView>
       </SessionProvider>

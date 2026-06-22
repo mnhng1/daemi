@@ -1,8 +1,10 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { MemoryWithAuthor } from "../../types/database";
-import { colors } from "../../lib/theme/tokens";
+import { colors, getAppearance } from "../../lib/theme/tokens";
 import { wordCount } from "../../lib/utils/text";
+
+const mono = getAppearance() === "monochrome";
 
 interface Props {
   memory: MemoryWithAuthor;
@@ -19,6 +21,36 @@ const CARD_PAD_TOP = Math.round(CARD_LINE_HEIGHT * 0.2);
 
 export const LetterMemoryCard = React.memo(function LetterMemoryCard({ memory }: Props) {
   const authorName = memory.author?.display_name?.toUpperCase() ?? "UNKNOWN";
+
+  if (mono) {
+    return (
+      <View className="py-1">
+        <View className="flex-row items-center mb-2">
+          <Text className="text-ink-3 text-xs uppercase tracking-wider font-semibold">
+            LETTER FROM {authorName}
+          </Text>
+        </View>
+
+        <Text
+          className="text-ink-2"
+          style={{
+            fontSize: CARD_FONT_SIZE,
+            lineHeight: CARD_LINE_HEIGHT,
+          }}
+          numberOfLines={CARD_LINES}
+        >
+          {memory.body}
+        </Text>
+
+        <View className="flex-row justify-end items-center gap-1.5 mt-2">
+          {memory.reactions.length > 0 && (
+            <Text style={{ fontSize: 12 }}>❤️</Text>
+          )}
+          <Text className="text-ink-3 text-xs">{wordCount(memory.body)} words</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View

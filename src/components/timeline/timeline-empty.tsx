@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { colors, fonts } from "../../lib/theme/tokens";
+import { colors, fonts, getAppearance } from "../../lib/theme/tokens";
 import { DATE_W, NODE_W, CONNECTOR_W } from "./layout";
 import { TimelineSpineLine } from "./timeline-spine-line";
 import { TimelineTodayCap } from "./timeline-today-cap";
@@ -13,6 +13,38 @@ import { Sticker } from "../ui/sticker";
 // dashed-accent card branching off a hollow node, with a "start here ↓" sticker.
 export function TimelineEmpty() {
   const router = useRouter();
+  // Monochrome: a flat, centered prompt — no spine, node, dashed card or sticker.
+  if (getAppearance() === "monochrome") {
+    return (
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
+        <Text style={{ fontSize: 22, fontWeight: "700", color: colors.ink, textAlign: "center", lineHeight: 28 }}>
+          Your scrapbook starts here.
+        </Text>
+        <Text style={{ fontSize: 14, color: colors.ink2, textAlign: "center", marginTop: 10, lineHeight: 20 }}>
+          Add a photo, letter, place or anything you want to keep, together.
+        </Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Add your first memory"
+          onPress={() => router.push("/(tabs)/add")}
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 7,
+            marginTop: 22,
+            paddingVertical: 12,
+            paddingHorizontal: 20,
+            borderRadius: 13,
+            backgroundColor: colors.accent,
+          }}
+        >
+          <MaterialCommunityIcons name="plus" size={16} color="#fff" />
+          <Text style={{ fontSize: 14.5, fontWeight: "600", color: "#fff" }}>add your first memory</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
   return (
     <View style={{ flex: 1, position: "relative", paddingLeft: 0, paddingRight: 16, paddingTop: 16 }}>
       <TimelineSpineLine />

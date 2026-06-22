@@ -1,7 +1,9 @@
 import React from "react";
 import { View, Text, Image, Pressable, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-import { colors } from "../../lib/theme/tokens";
+import { colors, getAppearance } from "../../lib/theme/tokens";
+
+const mono = getAppearance() === "monochrome";
 import { toDateKey } from "../../lib/utils/date";
 import Animated, {
   useSharedValue,
@@ -22,7 +24,7 @@ function GridThumbnail({ memory }: { memory: MemoryWithAuthor }) {
   if (memory.type === "letter") {
     return (
       <View className="flex-1 rounded-lg overflow-hidden items-center justify-center" style={{ aspectRatio: 1, backgroundColor: colors.letterPaper }}>
-        <Text className="text-accent text-xs font-semibold uppercase">Letter</Text>
+        <Text className={mono ? "text-ink-3 text-xs font-semibold uppercase" : "text-accent text-xs font-semibold uppercase"}>Letter</Text>
       </View>
     );
   }
@@ -46,7 +48,7 @@ function OverflowThumbnail({ memory, count }: { memory: MemoryWithAuthor; count:
   if (memory.type === "letter") {
     return (
       <View className="flex-1 rounded-lg overflow-hidden items-center justify-center" style={{ aspectRatio: 1, backgroundColor: colors.letterPaper }}>
-        <Text className="text-accent text-xs font-semibold uppercase">Letter</Text>
+        <Text className={mono ? "text-ink-3 text-xs font-semibold uppercase" : "text-accent text-xs font-semibold uppercase"}>Letter</Text>
         <View
           className="rounded-lg items-center justify-center"
           style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(42, 37, 32, 0.45)" }]}
@@ -116,7 +118,7 @@ export const MemoryGroupCard = React.memo(function MemoryGroupCard({ memories }:
       accessibilityLabel={title ?? `${memories.length} memories`}
       style={animatedStyle}
     >
-      <View className="bg-surface rounded-2xl border border-ink-4/20 shadow-sm overflow-hidden">
+      <View className={mono ? "overflow-hidden" : "bg-surface rounded-2xl border border-ink-4/20 shadow-sm overflow-hidden"}>
         <View className="p-2" style={{ gap: 4 }}>
           <View className="flex-row" style={{ gap: 4 }}>
             {topRow.map((m) => (
@@ -151,7 +153,7 @@ export const MemoryGroupCard = React.memo(function MemoryGroupCard({ memories }:
           </View>
           <View className="flex-row items-center justify-between mt-1.5">
             {placeName ? (
-              <View className="flex-row items-center bg-surface-2 rounded-full px-2.5 py-1">
+              <View className="flex-row items-center bg-shade rounded-full px-2.5 py-1">
                 <View className="w-1.5 h-1.5 rounded-full bg-ink-3 mr-1.5" />
                 <Text className="text-ink-3 text-xs">{placeName}</Text>
               </View>

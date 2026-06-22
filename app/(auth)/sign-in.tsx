@@ -13,7 +13,9 @@ import { useState } from "react";
 import Animated, { FadeIn, FadeInDown, FadeInUp } from "react-native-reanimated";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useGoogleSignIn } from "../../src/features/auth";
-import { colors, fonts } from "../../src/lib/theme/tokens";
+import { colors, fonts, getAppearance } from "../../src/lib/theme/tokens";
+
+const mono = getAppearance() === "monochrome";
 
 // Muted sage for the small botanical accents (wordmark sprig + divider leaf).
 const sage = "#9caf88";
@@ -75,7 +77,7 @@ export default function SignIn() {
                 position: "absolute",
                 top: 8,
                 right: -2,
-                transform: [{ rotate: "18deg" }],
+                transform: [{ rotate: mono ? "0deg" : "18deg" }],
               }}
             />
           </View>

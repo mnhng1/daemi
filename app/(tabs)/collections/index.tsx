@@ -22,7 +22,9 @@ import { useSession } from "../../../src/features/auth";
 import { CreateCollectionSheet } from "../../../src/components/collections/create-collection-sheet";
 import { IconButton } from "../../../src/components/ui/icon-button";
 import { Sticker } from "../../../src/components/ui/sticker";
-import { colors, fonts, cardShadow } from "../../../src/lib/theme/tokens";
+import { colors, fonts, cardShadow, getAppearance } from "../../../src/lib/theme/tokens";
+
+const mono = getAppearance() === "monochrome";
 
 // Single polaroid tile — always rendered so hook is never called conditionally.
 function CoverTile({
@@ -90,7 +92,7 @@ function CoverStack({
           position: "absolute",
           top: 8,
           left: 0,
-          transform: [{ rotate: "-4deg" }],
+          transform: [{ rotate: mono ? "0deg" : "-4deg" }],
         }}
       >
         <CoverTile cover={back} coupleSpaceId={coupleSpaceId} />
@@ -101,7 +103,7 @@ function CoverStack({
           position: "absolute",
           top: 2,
           left: 12,
-          transform: [{ rotate: "5deg" }],
+          transform: [{ rotate: mono ? "0deg" : "5deg" }],
         }}
       >
         <CoverTile cover={front} coupleSpaceId={coupleSpaceId} />
@@ -130,7 +132,7 @@ function CollectionCard({
       accessibilityLabel={item.name}
       // Static style: css-interop's wrapped Pressable ignores the function form.
       style={[
-        cardShadow,
+        mono ? undefined : cardShadow,
         {
           flexDirection: "row",
           alignItems: "center",
