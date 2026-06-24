@@ -10,6 +10,7 @@ import {
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTabBarSpace } from "../../../src/components/navigation/tab-bar-metrics";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useCurrentUser, useSignOut } from "../../../src/features/auth";
@@ -67,6 +68,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 }
 
 export default function SettingsScreen() {
+  const tabBarSpace = useTabBarSpace();
   const { data: currentUser } = useCurrentUser();
   const { data: membership } = useCurrentCoupleSpace();
   const { data: partnerName } = usePartner();
@@ -142,7 +144,7 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.paper }} edges={["top"]}>
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 48 }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: tabBarSpace }}>
         <Text
           style={{
             fontFamily: fonts.display,

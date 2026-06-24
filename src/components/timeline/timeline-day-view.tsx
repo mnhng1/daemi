@@ -19,6 +19,7 @@ import { TimelineGhostRow } from "./timeline-ghost-row";
 import { TimelineMemoryRow } from "./timeline-memory-row";
 import { MemoryCard } from "../memory/memory-card";
 import { MemoryGroupCard } from "../memory/memory-carousel";
+import { useTabBarSpace } from "../navigation/tab-bar-metrics";
 
 interface Props {
   rows: DayRow[];
@@ -34,6 +35,8 @@ export function TimelineDayView({ rows, onRefresh, scrollRef, onScroll }: Props)
   // Monochrome ("Threads-style") day view is a flat, date-less continuous feed:
   // full-width memories separated by 1px hairlines — no spine, nodes, date column,
   // today cap or month markers. Scrapbook keeps the original spine layout below.
+  const tabBarSpace = useTabBarSpace();
+
   if (getAppearance() === "monochrome") {
     return (
       <MonoDayFeed rows={rows} onRefresh={onRefresh} scrollRef={scrollRef} onScroll={onScroll} />
@@ -48,7 +51,7 @@ export function TimelineDayView({ rows, onRefresh, scrollRef, onScroll }: Props)
       refreshControl={
         <RefreshControl refreshing={false} onRefresh={onRefresh} tintColor={colors.accent} />
       }
-      contentContainerStyle={{ position: "relative", paddingLeft: 0, paddingRight: 16, paddingTop: 12, paddingBottom: 28 }}
+      contentContainerStyle={{ position: "relative", paddingLeft: 0, paddingRight: 16, paddingTop: 12, paddingBottom: tabBarSpace }}
     >
       <TimelineSpineLine />
       {rows.map((row) => {
@@ -125,6 +128,7 @@ function renderMonoRow(row: DayRow): React.ReactNode {
 }
 
 function MonoDayFeed({ rows, onRefresh, scrollRef, onScroll }: Props) {
+  const tabBarSpace = useTabBarSpace();
   return (
     <ScrollView
       ref={scrollRef}
@@ -133,7 +137,7 @@ function MonoDayFeed({ rows, onRefresh, scrollRef, onScroll }: Props) {
       refreshControl={
         <RefreshControl refreshing={false} onRefresh={onRefresh} tintColor={colors.ink} />
       }
-      contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 28 }}
+      contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabBarSpace }}
     >
       {rows.map((row) => {
         const content = renderMonoRow(row);

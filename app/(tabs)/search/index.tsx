@@ -9,6 +9,7 @@ import {
   Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTabBarSpace } from "../../../src/components/navigation/tab-bar-metrics";
 import { useCurrentCoupleSpace } from "../../../src/features/couple-space";
 import { useSearchMemories, useSpaceTags } from "../../../src/features/search";
 import { MemoryCard } from "../../../src/components/memory/memory-card";
@@ -16,6 +17,7 @@ import { colors } from "../../../src/lib/theme/tokens";
 import type { MemoryWithAuthor } from "../../../src/types/database";
 
 export default function Search() {
+  const tabBarSpace = useTabBarSpace();
   const { data: coupleSpace } = useCurrentCoupleSpace();
   const spaceId = coupleSpace?.couple_spaces?.id;
 
@@ -162,7 +164,7 @@ export default function Search() {
           data={data}
           keyExtractor={keyExtractor}
           renderItem={renderItem}
-          contentContainerStyle={{ paddingBottom: 32 }}
+          contentContainerStyle={{ paddingBottom: tabBarSpace }}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         />

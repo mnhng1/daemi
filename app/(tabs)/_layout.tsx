@@ -26,16 +26,19 @@ export default function TabLayout() {
     <Tabs
       tabBar={(props) => <BottomTabBar {...props} />}
       screenOptions={{
+        // Each screen renders its own top-left title, so the navigator header is
+        // pure duplication — hide it everywhere and reclaim the vertical space.
+        headerShown: false,
         headerStyle: { backgroundColor: colors.paper },
         headerTintColor: colors.ink,
       }}
     >
       {/* Declaration order = tab-bar order: the centred `add` becomes the raised FAB. */}
-      <Tabs.Screen name="timeline" options={{ title: "Timeline", headerShown: false }} />
+      <Tabs.Screen name="timeline" options={{ title: "Timeline" }} />
       <Tabs.Screen name="collections" options={{ title: "Collections" }} />
-      <Tabs.Screen name="add" options={{ title: "Add", headerShown: false }} />
+      <Tabs.Screen name="add" options={{ title: "Add" }} />
       <Tabs.Screen name="places" options={{ title: "Places" }} />
-      <Tabs.Screen name="settings" options={{ title: "You", headerShown: false }} />
+      <Tabs.Screen name="settings" options={{ title: "You" }} />
       {/* Search stays a mounted route (Timeline header pushes to it) but is hidden
           from the tab bar — `href: null` removes it from the bar's route list. */}
       <Tabs.Screen name="search" options={{ href: null, title: "Find" }} />

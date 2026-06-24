@@ -17,6 +17,7 @@ import { z } from "zod";
 import * as ImagePicker from "expo-image-picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTabBarSpace } from "../../../src/components/navigation/tab-bar-metrics";
 import { useSession, useCurrentUser } from "../../../src/features/auth";
 import { useCurrentCoupleSpace, usePartner } from "../../../src/features/couple-space";
 import { useCreateMemory } from "../../../src/features/memories";
@@ -42,6 +43,7 @@ type FormData = z.infer<typeof schema>;
 
 export default function Add() {
   const router = useRouter();
+  const tabBarSpace = useTabBarSpace();
   const { session } = useSession();
   const { data: coupleSpaceData } = useCurrentCoupleSpace();
   const { data: currentUser } = useCurrentUser();
@@ -345,7 +347,7 @@ export default function Add() {
         </View>
 
         <ScrollView
-          contentContainerStyle={styles.body}
+          contentContainerStyle={[styles.body, { paddingBottom: tabBarSpace }]}
           keyboardShouldPersistTaps="handled"
         >
           <TouchableOpacity onPress={pickImage}>

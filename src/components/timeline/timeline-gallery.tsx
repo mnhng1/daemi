@@ -12,6 +12,7 @@ import { useRouter } from "expo-router";
 import { MemoryWithAuthor } from "../../types/database";
 import { useMediaUrl, useThumbnailUrl } from "../../features/media";
 import { colors } from "../../lib/theme/tokens";
+import { useTabBarSpace } from "../navigation/tab-bar-metrics";
 
 // Monochrome ("Threads-style") aggregate view: a flat photo-grid gallery used by the
 // month and year zoom levels in place of the scrapbook spine/volume-bar layout.
@@ -144,6 +145,7 @@ interface Props {
 export function MonoGallery({ sections, onRefresh }: Props) {
   const { width } = useWindowDimensions();
   const size = Math.floor((width - H_PAD * 2 - GAP * (COLS - 1)) / COLS);
+  const tabBarSpace = useTabBarSpace();
 
   return (
     <ScrollView
@@ -152,7 +154,7 @@ export function MonoGallery({ sections, onRefresh }: Props) {
           <RefreshControl refreshing={false} onRefresh={onRefresh} tintColor={colors.ink} />
         ) : undefined
       }
-      contentContainerStyle={{ paddingHorizontal: H_PAD, paddingTop: 8, paddingBottom: 28 }}
+      contentContainerStyle={{ paddingHorizontal: H_PAD, paddingTop: 8, paddingBottom: tabBarSpace }}
     >
       {sections.map((s) => (
         <View key={s.key} style={{ marginBottom: 22 }}>

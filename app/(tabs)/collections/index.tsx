@@ -8,6 +8,7 @@ import {
   Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTabBarSpace } from "../../../src/components/navigation/tab-bar-metrics";
 import { router } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useCurrentCoupleSpace } from "../../../src/features/couple-space";
@@ -209,6 +210,7 @@ function NewCollectionButton({ onPress }: { onPress: () => void }) {
 }
 
 export default function CollectionsListScreen() {
+  const tabBarSpace = useTabBarSpace();
   const { data: coupleSpace } = useCurrentCoupleSpace();
   const spaceId = coupleSpace?.couple_spaces?.id;
 
@@ -355,7 +357,7 @@ export default function CollectionsListScreen() {
           data={data}
           keyExtractor={keyExtractor}
           renderItem={renderItem}
-          contentContainerStyle={{ paddingTop: 16, paddingBottom: 32 }}
+          contentContainerStyle={{ paddingTop: 16, paddingBottom: tabBarSpace }}
           ListFooterComponent={listFooter}
         />
       )}

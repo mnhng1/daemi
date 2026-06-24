@@ -11,6 +11,7 @@ import { MemoryTypeFilter } from "../../features/memories/types";
 import { colors, fonts, memoryTypeColors, getAppearance } from "../../lib/theme/tokens";
 import { TimelineNode } from "./timeline-node";
 import { TimelineSpineLine } from "./timeline-spine-line";
+import { useTabBarSpace } from "../navigation/tab-bar-metrics";
 import { MonoGallery, type GallerySection } from "./timeline-gallery";
 
 interface Props {
@@ -76,6 +77,8 @@ export function TimelineYearView({ memories, anniversaryMonth, typeFilter, onZoo
       }));
   }, [mono, memories, typeFilter]);
 
+  const tabBarSpace = useTabBarSpace();
+
   if (mono) return <MonoGallery sections={gallerySections} />;
 
   return (
@@ -88,7 +91,7 @@ export function TimelineYearView({ memories, anniversaryMonth, typeFilter, onZoo
         position: "relative",
         justifyContent: "space-between",
         paddingTop: 4,
-        paddingBottom: 28,
+        paddingBottom: tabBarSpace,
         paddingRight: 16,
       }}
     >

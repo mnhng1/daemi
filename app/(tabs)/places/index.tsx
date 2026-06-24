@@ -7,6 +7,7 @@ import {
   Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTabBarSpace } from "../../../src/components/navigation/tab-bar-metrics";
 import { router } from "expo-router";
 import { useCurrentCoupleSpace } from "../../../src/features/couple-space";
 import {
@@ -93,6 +94,7 @@ function ModeChip({
 }
 
 export default function PlacesListScreen() {
+  const tabBarSpace = useTabBarSpace();
   const { data: coupleSpace } = useCurrentCoupleSpace();
   const spaceId = coupleSpace?.couple_spaces?.id;
 
@@ -245,7 +247,7 @@ export default function PlacesListScreen() {
               data={places}
               keyExtractor={keyExtractor}
               renderItem={renderItem}
-              contentContainerStyle={{ paddingTop: 4, paddingBottom: 32 }}
+              contentContainerStyle={{ paddingTop: 4, paddingBottom: tabBarSpace }}
             />
           )}
         </>

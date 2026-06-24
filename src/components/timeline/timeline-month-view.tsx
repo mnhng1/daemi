@@ -13,6 +13,7 @@ import { TimelineNode } from "./timeline-node";
 import { TimelineMonthMarker } from "./timeline-month-marker";
 import { TimelineMiniThumb } from "./timeline-mini-thumb";
 import { MonoGallery, type GallerySection } from "./timeline-gallery";
+import { useTabBarSpace } from "../navigation/tab-bar-metrics";
 
 interface Props {
   memories: MemoryWithAuthor[];
@@ -62,6 +63,7 @@ export function TimelineMonthView({ memories, anniversaryMonth, typeFilter }: Pr
   // Monochrome: a flat photo-grid gallery grouped by month, in place of the
   // scrapbook spine / week-bucket / volume layout.
   const mono = getAppearance() === "monochrome";
+  const tabBarSpace = useTabBarSpace();
   const gallerySections = useMemo<GallerySection[]>(() => {
     if (!mono) return [];
     const filtered =
@@ -133,7 +135,7 @@ export function TimelineMonthView({ memories, anniversaryMonth, typeFilter }: Pr
           </View>
         </View>
       )}
-      contentContainerStyle={{ paddingBottom: 28, paddingRight: 16 }}
+      contentContainerStyle={{ paddingBottom: tabBarSpace, paddingRight: 16 }}
     />
   );
 }
